@@ -257,7 +257,16 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
             icon="fa-bar-chart",
             category="",
             category_icon="",
+        ),
+        appbuilder.add_link(
+            "Pdf Designer",
+            label=__("Pdf Designer"),
+            href="/pdfdesigner/",
+            category_icon="fa-flask",
+            icon="fa-flask",
+            category="",
         )
+
 
         appbuilder.add_link(
             "Datasets",
