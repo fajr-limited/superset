@@ -1,5 +1,21 @@
 import { Template, checkTemplate, BLANK_PDF } from "@pdfme/common";
-
+import {
+  multiVariableText,
+  text,
+  barcodes,
+  image,
+  svg,
+  line,
+  table,
+  rectangle,
+  ellipse,
+  dateTime,
+  date,
+  time,
+  select,
+  checkbox,
+  radioGroup,
+} from '@pdfme/schemas';
 export const readFile = (
   file: File | null,
   type: "text" | "dataURL" | "arrayBuffer"
@@ -60,34 +76,112 @@ export const isJsonString = (str: string) => {
   return true;
 };
 
-export const getTemplate = () => {
+export function getTemplate(): Template {
   const template: Template = {
     basePdf: BLANK_PDF,
     schemas: [
-      [
-        {
-          name: 'a',
-          type: 'text',
-          position: { x: 0, y: 0 },
-          width: 10,
-          height: 10,
+    [
+      {
+        "name": "name",
+        "type": "text",
+        "content": "Pet Name",
+        "position": {
+          "x": 24.8,
+          "y": 26.61
         },
-        {
-          name: 'b',
-          type: 'text',
-          position: { x: 10, y: 10 },
-          width: 10,
-          height: 10,
+        "width": 77.77,
+        "height": 18.7,
+        "fontSize": 36,
+        "fontColor": "#14b351"
+      },
+      // {
+      //   name: 'example_image',
+      //   type: 'image',
+      //   position: { x: 200, y: 200 },
+      //   width: 60,
+      //   height: 40,
+      // },
+      {
+        "name": "age",
+        "type": "text",
+        "content": "4 years",
+        "position": {
+          "x": 36,
+          "y": 179.46
         },
-        {
-          name: 'c',
-          type: 'text',
-          position: { x: 20, y: 20 },
-          width: 10,
-          height: 10,
+        "width": 43.38,
+        "height": 6.12,
+        "fontSize": 12
+      },
+      {
+        "name": "sex",
+        "type": "text",
+        "content": "Male",
+        "position": {
+          "x": 36,
+          "y": 186.23
         },
-      ],
-    ],
+        "width": 43.38,
+        "height": 6.12,
+        "fontSize": 12
+      },
+      {
+        "name": "weight",
+        "type": "text",
+        "content": "33 pounds",
+        "position": {
+          "x": 40,
+          "y": 192.99
+        },
+        "width": 43.38,
+        "height": 6.12,
+        "fontSize": 12
+      },
+      {
+        "name": "breed",
+        "type": "text",
+        "content": "Mutt",
+        "position": {
+          "x": 40,
+          "y": 199.09
+        },
+        "width": 43.38,
+        "height": 6.12,
+        "fontSize": 12
+      }
+    ]
+  ],
   };
   return template;
+};
+
+export function getTemplatePlugins() {
+  return {
+    Text: text,
+    'Multi-Variable Text': multiVariableText,
+    Table: table,
+    Line: line,
+    Rectangle: rectangle,
+    Ellipse: ellipse,
+    Image: image,
+    SVG: svg,
+    // Signature: plugins.signature,
+    QR: barcodes.qrcode,
+    DateTime: dateTime,
+    Date: date,
+    Time: time,
+    Select: select,
+    Checkbox: checkbox,
+    RadioGroup: radioGroup,
+    // JAPANPOST: barcodes.japanpost,
+    EAN13: barcodes.ean13,
+    // EAN8: barcodes.ean8,
+    // Code39: barcodes.code39,
+    Code128: barcodes.code128,
+    // NW7: barcodes.nw7,
+    // ITF14: barcodes.itf14,
+    // UPCA: barcodes.upca,
+    // UPCE: barcodes.upce,
+    // GS1DataMatrix: barcodes.gs1datamatrix,
+  };
 };
