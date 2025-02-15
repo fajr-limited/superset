@@ -3,7 +3,7 @@ import { Designer } from '@pdfme/ui';
 import { getInputFromTemplate, type Template } from '@pdfme/common';
 import { getTemplate, getTemplatePlugins } from './helper';
 import { generate } from "@pdfme/generator";
-import { text, image, barcodes } from "@pdfme/schemas";
+// import { text, image, barcodes } from "@pdfme/schemas";
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
@@ -62,14 +62,14 @@ const PdfMeDesignerComponent = () => {
 
     // Create a download link
     const blob = new Blob([pdfBuffer], { type: "application/pdf" });
-    window.open(URL.createObjectURL(blob));
-    // const link = document.createElement("a");
-    // link.href = URL.createObjectURL(blob);
+    // window.open(URL.createObjectURL(blob));
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
 
-    // link.download = "customized.pdf";
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
+    link.download = "customized.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
