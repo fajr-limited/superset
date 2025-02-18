@@ -16,6 +16,7 @@ import {
   checkbox,
   radioGroup,
 } from '@pdfme/schemas';
+import { signature } from "./plugins/signature";
 export const readFile = (
   file: File | null,
   type: "text" | "dataURL" | "arrayBuffer"
@@ -165,7 +166,7 @@ export function getTemplatePlugins() {
     Ellipse: ellipse,
     Image: image,
     SVG: svg,
-    // Signature: plugins.signature,
+    Signature: signature,
     QR: barcodes.qrcode,
     DateTime: dateTime,
     Date: date,
