@@ -16,6 +16,7 @@ import {
   checkbox,
   radioGroup,
 } from '@pdfme/schemas';
+import { boldText } from "./plugins/boldText";
 export const readFile = (
   file: File | null,
   type: "text" | "dataURL" | "arrayBuffer"
@@ -147,8 +148,7 @@ export function getTemplate(): Template {
         },
         "width": 43.38,
         "height": 6.12,
-        "fontSize": 12
-      }
+        "fontSize": 12      },
     ]
   ],
   };
@@ -178,6 +178,7 @@ export function getTemplatePlugins() {
     // EAN8: barcodes.ean8,
     // Code39: barcodes.code39,
     Code128: barcodes.code128,
+    BoldText: boldText,
     // NW7: barcodes.nw7,
     // ITF14: barcodes.itf14,
     // UPCA: barcodes.upca,

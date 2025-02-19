@@ -3,6 +3,7 @@
     "@pdfme/common": "file:../pdfme/packages/common",
     "@pdfme/generator": "file:../pdfme/packages/generator",
     "@pdfme/schemas": "file:../pdfme/packages/schemas",
-    "@pdfme/ui": "file:../pdfme/packages/ui"
+    "@pdfme/ui": "file:../pdfme/packages/ui",
+    "pdf-lib": "^1.17.1"
   }
 }
