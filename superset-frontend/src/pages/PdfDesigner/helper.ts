@@ -77,83 +77,158 @@ export const isJsonString = (str: string) => {
 };
 
 export function getTemplate(): Template {
+  const headObject = ["id", "name", "age", "city"];
+  const contentObject = [
+    ["1", "John Doe", "28", "New York"],
+    ["2", "Jane Smith", "34", "San Francisco"]
+  ];
+
   const template: Template = {
     basePdf: BLANK_PDF,
     schemas: [
-    [
-      {
-        "name": "name",
-        "type": "text",
-        "content": "Pet Name",
-        "position": {
-          "x": 24.8,
-          "y": 26.61
+      [
+        {
+          "name": "name",
+          "type": "text",
+          "content": "Pet Name",
+          "position": {
+            "x": 24.8,
+            "y": 26.61
+          },
+          "width": 77.77,
+          "height": 18.7,
+          "fontSize": 36,
+          "fontColor": "#14b351"
         },
-        "width": 77.77,
-        "height": 18.7,
-        "fontSize": 36,
-        "fontColor": "#14b351"
-      },
-      // {
+        // {
       //   name: 'example_image',
       //   type: 'image',
       //   position: { x: 200, y: 200 },
       //   width: 60,
       //   height: 40,
       // },
-      {
-        "name": "age",
-        "type": "text",
-        "content": "4 years",
-        "position": {
-          "x": 36,
-          "y": 179.46
+        {
+          "name": "age",
+          "type": "text",
+          "content": "4 years",
+          "position": {
+            "x": 36,
+            "y": 179.46
+          },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "sex",
-        "type": "text",
-        "content": "Male",
-        "position": {
-          "x": 36,
-          "y": 186.23
+        {
+          "name": "sex",
+          "type": "text",
+          "content": "Male",
+          "position": {
+            "x": 36,
+            "y": 186.23
+          },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "weight",
-        "type": "text",
-        "content": "33 pounds",
-        "position": {
-          "x": 40,
-          "y": 192.99
+        {
+          "name": "weight",
+          "type": "text",
+          "content": "33 pounds",
+          "position": {
+            "x": 40,
+            "y": 192.99
+          },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "breed",
-        "type": "text",
-        "content": "Mutt",
-        "position": {
-          "x": 40,
-          "y": 199.09
+        {
+          "name": "breed",
+          "type": "text",
+          "content": "Mutt",
+          "position": {
+            "x": 40,
+            "y": 199.09
+          },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      }
+        {
+          "name": "table_1",
+          "type": "table",
+          "position": {
+            "x": 28.92,
+            "y": 51.36
+          },
+          "width": 150,
+          "height": 57.5184,
+          "content": JSON.stringify(contentObject.map(row => row.map(String))),
+          "showHead": true,
+          "head": headObject,
+          "headWidthPercentages": [25, 25, 25, 25],
+          "tableStyles": {
+            "borderWidth": 0.3,
+            "borderColor": "#000000"
+          },
+          "headStyles": {
+            "fontName": "NotoSerifJP-Regular",
+            "fontSize": 13,
+            "characterSpacing": 0,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1,
+            "fontColor": "#ffffff",
+            "borderColor": "",
+            "backgroundColor": "#2980ba",
+            "borderWidth": {
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            },
+            "padding": {
+              "top": 5,
+              "right": 5,
+              "bottom": 5,
+              "left": 5
+            }
+          },
+          "bodyStyles": {
+            "fontName": "NotoSerifJP-Regular",
+            "fontSize": 13,
+            "characterSpacing": 0,
+            "alignment": "left",
+            "verticalAlignment": "middle",
+            "lineHeight": 1,
+            "fontColor": "#000000",
+            "borderColor": "#888888",
+            "backgroundColor": "",
+            "alternateBackgroundColor": "#f5f5f5",
+            "borderWidth": {
+              "top": 0.1,
+              "right": 0.1,
+              "bottom": 0.1,
+              "left": 0.1
+            },
+            "padding": {
+              "top": 5,
+              "right": 5,
+              "bottom": 5,
+              "left": 5
+            }
+          },
+          "columnStyles": {},
+          "required": false,
+          "readOnly": false
+        }
+      ]
     ]
-  ],
   };
+  console.log("Generated Template Schema:", JSON.stringify(template, null, 2));
   return template;
-};
+}
 
 export function getTemplatePlugins() {
   return {
