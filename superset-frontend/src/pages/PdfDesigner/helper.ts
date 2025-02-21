@@ -79,8 +79,8 @@ export const isJsonString = (str: string) => {
 export function getTemplate(): Template {
   const headObject = ["id", "name", "age", "city"];
   const contentObject = [
-    [1, "John Doe", "28", "New York"],
-    [2, "Jane Smith", "34", "San Francisco"]
+    ["1", "John Doe", "28", "New York"],
+    ["2", "Jane Smith", "34", "San Francisco"]
   ];
 
   const template: Template = {
@@ -164,7 +164,7 @@ export function getTemplate(): Template {
           },
           "width": 150,
           "height": 57.5184,
-          "content": JSON.stringify(contentObject),
+          "content": JSON.stringify(contentObject.map(row => row.map(String))),
           "showHead": true,
           "head": headObject,
           "headWidthPercentages": [25, 25, 25, 25],
@@ -226,6 +226,7 @@ export function getTemplate(): Template {
       ]
     ]
   };
+  console.log("Generated Template Schema:", JSON.stringify(template, null, 2));
   return template;
 }
 
