@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from "react";
-import { Designer } from "@pdfme/ui";
-import { getInputFromTemplate, type Template } from "@pdfme/common";
-import { getTemplate, getTemplatePlugins } from "./helper";
+import React, { useEffect, useRef } from 'react';
+import { Designer } from '@pdfme/ui';
+import { getInputFromTemplate, type Template } from '@pdfme/common';
+import { getTemplate, getTemplatePlugins } from './helper';
 import { generate } from "@pdfme/generator";
+import { text, image, barcodes } from "@pdfme/schemas";
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
