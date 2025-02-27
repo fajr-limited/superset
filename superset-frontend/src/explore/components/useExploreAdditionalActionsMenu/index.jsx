@@ -27,6 +27,7 @@ import {
   useTheme,
   VizType,
 } from '@superset-ui/core';
+import { ChartClient } from '@superset-ui/core';
 import Icons from 'src/components/Icons';
 import { Menu } from 'src/components/Menu';
 import ModalTrigger from 'src/components/ModalTrigger';
@@ -69,6 +70,7 @@ const MENU_KEYS = {
   DELETE_REPORT: 'delete_report',
   VIEW_QUERY: 'view_query',
   RUN_IN_SQL_LAB: 'run_in_sql_lab',
+  ADD_TABLE_TO_PDF_DESIGNER: 'add_table_to_pdf_designer', 
 };
 
 const VIZ_TYPES_PIVOTABLE = [VizType.PivotTable];
@@ -207,7 +209,95 @@ export const useExploreAdditionalActionsMenu = (
       addDangerToast(t('Sorry, something went wrong. Try again later.'));
     }
   }, [addDangerToast, addSuccessToast, latestQueryFormData]);
+  
+  const handleAddTableToPdfDesigner = useCallback(() => {
 
+    console.log("slice:", slice);
+    
+    if (slice?.slice_id) {
+      const chartClient = new ChartClient();
+
+      const formData = {
+        datasource: {
+          id: 21, 
+          type: "table"
+        },
+        viz_type: "table",
+        slice_id: 120,
+        query_mode: "aggregate",
+        groupby: ["product_category"], 
+        metrics: ["count"],
+        row_limit: 10000,
+        order_desc: true,
+        result_format: "json",
+        result_type: "results",
+        url_params: { slice_id: "120" },
+      };
+
+      console.log("formData:", formData);
+      
+      const queries = [
+        {
+          filters: [],
+          extras: { having: "", where: "" },
+          applied_time_extras: {},
+          columns: ["product_category"],
+          metrics: ["count"],
+          orderby: [["count", false]],
+          order_desc: true,
+          row_limit: 10000,
+          series_limit: 0,
+          time_offsets: [],
+          result_format: "json",
+          result_type: "results",
+        },
+      ];
+      
+      console.log("Sending formData:", { datasource: formData.datasource, queries });
+      
+      chartClient
+        .loadQueryData({
+          datasource: formData.datasource, 
+          form_data: formData,
+          queries,
+          result_format: formData.result_format,
+          result_type: formData.result_type,
+        })
+        .then((response) => {
+          console.log("Response received:", response);
+          const tableData = response.result?.[0]?.data || [];
+          if (tableData.length === 0) {
+            console.error("No table data available.");
+            return;
+          }
+
+          const headers = response.result?.[0]?.colnames || [];
+          const rows = tableData.map((row) => Object.values(row));
+
+          const tableTemplate = {
+            schemas: [
+              {
+                key: "table",
+                type: "table",
+                columns: headers,
+                data: rows,
+              },
+            ],
+          };
+
+          history.push({
+            pathname: "/pdf-designer",
+            state: { template: tableTemplate },
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching table data:", error);
+        });
+    }
+    setIsDropdownVisible(false);
+  }, [slice?.slice_id, history]);
+ 
+ 
   const handleMenuClick = useCallback(
     ({ key, domEvent }) => {
       switch (key) {
@@ -288,6 +378,9 @@ export const useExploreAdditionalActionsMenu = (
           onOpenInEditor(latestQueryFormData, domEvent.metaKey);
           setIsDropdownVisible(false);
           break;
+        case MENU_KEYS.ADD_TABLE_TO_PDF_DESIGNER:
+          handleAddTableToPdfDesigner();
+          break;
         default:
           break;
       }
@@ -302,8 +395,22 @@ export const useExploreAdditionalActionsMenu = (
       onOpenPropertiesModal,
       shareByEmail,
       slice?.slice_name,
-    ],
+      handleAddTableToPdfDesigner,
+    ]
   );
+  
+  const menuItems = [
+    { key: MENU_KEYS.ADD_TABLE_TO_PDF_DESIGNER, label: t('Add table to Pdf Designer') },
+  ];
+  
+  const dropdownMenu = (
+    <Menu onClick={handleMenuClick}>
+      {menuItems.map(item => (
+        <Menu.Item key={item.key}>{item.label}</Menu.Item>
+      ))}
+    </Menu>
+  );
+  
 
   const menu = useMemo(
     () => (
@@ -445,6 +552,9 @@ export const useExploreAdditionalActionsMenu = (
             {t('Run in SQL Lab')}
           </Menu.Item>
         )}
+        <Menu.Item key={MENU_KEYS.ADD_TABLE_TO_PDF_DESIGNER}>
+          {t('Add table to Pdf Designer')}
+        </Menu.Item>
       </Menu>
     ),
     [
