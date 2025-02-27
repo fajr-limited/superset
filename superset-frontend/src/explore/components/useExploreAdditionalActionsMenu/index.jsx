@@ -211,41 +211,92 @@ export const useExploreAdditionalActionsMenu = (
   }, [addDangerToast, addSuccessToast, latestQueryFormData]);
   
   const handleAddTableToPdfDesigner = useCallback(() => {
+
+    console.log("slice:", slice);
+    
     if (slice?.slice_id) {
       const chartClient = new ChartClient();
-      chartClient.loadQueryData({ sliceId: slice.slice_id })
-        .then(response => {
-          const tableData = response.queriesData?.[0]?.data || [];
+
+      const formData = {
+        datasource: {
+          id: 21, 
+          type: "table"
+        },
+        viz_type: "table",
+        slice_id: 120,
+        query_mode: "aggregate",
+        groupby: ["product_category"], 
+        metrics: ["count"],
+        row_limit: 10000,
+        order_desc: true,
+        result_format: "json",
+        result_type: "results",
+        url_params: { slice_id: "120" },
+      };
+
+      console.log("formData:", formData);
+      
+      const queries = [
+        {
+          filters: [],
+          extras: { having: "", where: "" },
+          applied_time_extras: {},
+          columns: ["product_category"],
+          metrics: ["count"],
+          orderby: [["count", false]],
+          order_desc: true,
+          row_limit: 10000,
+          series_limit: 0,
+          time_offsets: [],
+          result_format: "json",
+          result_type: "results",
+        },
+      ];
+      
+      console.log("Sending formData:", { datasource: formData.datasource, queries });
+      
+      chartClient
+        .loadQueryData({
+          datasource: formData.datasource, 
+          form_data: formData,
+          queries,
+          result_format: formData.result_format,
+          result_type: formData.result_type,
+        })
+        .then((response) => {
+          console.log("Response received:", response);
+          const tableData = response.result?.[0]?.data || [];
           if (tableData.length === 0) {
-            console.error('No table data available.');
+            console.error("No table data available.");
             return;
           }
- 
-          const headers = Object.keys(tableData[0]);
-          const rows = tableData.map(row => Object.values(row));
- 
+
+          const headers = response.result?.[0]?.colnames || [];
+          const rows = tableData.map((row) => Object.values(row));
+
           const tableTemplate = {
             schemas: [
               {
-                key: 'table',
-                type: 'table',
+                key: "table",
+                type: "table",
                 columns: headers,
                 data: rows,
               },
             ],
           };
- 
+
           history.push({
-            pathname: '/pdf-designer',
+            pathname: "/pdf-designer",
             state: { template: tableTemplate },
           });
         })
-        .catch(error => {
-          console.error('Error fetching table data:', error);
+        .catch((error) => {
+          console.error("Error fetching table data:", error);
         });
     }
     setIsDropdownVisible(false);
   }, [slice?.slice_id, history]);
+ 
  
   const handleMenuClick = useCallback(
     ({ key, domEvent }) => {
