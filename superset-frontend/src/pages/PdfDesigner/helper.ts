@@ -1,4 +1,4 @@
-import { Template, checkTemplate, BLANK_PDF } from "@pdfme/common";
+import { Template, checkTemplate, BLANK_PDF } from '@pdfme/common';
 import {
   multiVariableText,
   text,
@@ -16,23 +16,24 @@ import {
   checkbox,
   radioGroup,
 } from '@pdfme/schemas';
+
 export const readFile = (
   file: File | null,
-  type: "text" | "dataURL" | "arrayBuffer"
+  type: 'text' | 'dataURL' | 'arrayBuffer',
 ) => {
-  return new Promise<string | ArrayBuffer>((r) => {
+  return new Promise<string | ArrayBuffer>(r => {
     const fileReader = new FileReader();
-    fileReader.addEventListener("load", (e) => {
+    fileReader.addEventListener('load', e => {
       if (e && e.target && e.target.result && file !== null) {
         r(e.target.result);
       }
     });
     if (file !== null) {
-      if (type === "text") {
+      if (type === 'text') {
         fileReader.readAsText(file);
-      } else if (type === "dataURL") {
+      } else if (type === 'dataURL') {
         fileReader.readAsDataURL(file);
-      } else if (type === "arrayBuffer") {
+      } else if (type === 'arrayBuffer') {
         fileReader.readAsArrayBuffer(file);
       }
     }
@@ -42,7 +43,7 @@ export const readFile = (
 export const cloneDeep = (obj: any) => JSON.parse(JSON.stringify(obj));
 
 export const getTemplateFromJsonFile = (file: File) => {
-  return readFile(file, "text").then((jsonStr) => {
+  return readFile(file, 'text').then(jsonStr => {
     const template: Template = JSON.parse(jsonStr as string);
     try {
       checkTemplate(template);
@@ -54,12 +55,12 @@ export const getTemplateFromJsonFile = (file: File) => {
 };
 
 export const downloadJsonFile = (json: any, title: string) => {
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     const blob = new Blob([JSON.stringify(json)], {
-      type: "application/json"
+      type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
     link.download = `${title}.json`;
     link.click();
@@ -78,82 +79,53 @@ export const isJsonString = (str: string) => {
 
 export function getTemplate(): Template {
   const template: Template = {
-    basePdf: BLANK_PDF,
+    basePdf: { width: 210, height: 297, padding: [10, 10, 10, 10] },
     schemas: [
-    [
-      {
-        "name": "name",
-        "type": "text",
-        "content": "Pet Name",
-        "position": {
-          "x": 24.8,
-          "y": 26.61
+      [
+        {
+          name: 'name',
+          type: 'text',
+          content: 'Pet Name',
+          position: { x: 24.8, y: 26.61 },
+          width: 77.77,
+          height: 18.7,
+          fontSize: 36,
+          fontColor: '#14b351',
         },
-        "width": 77.77,
-        "height": 18.7,
-        "fontSize": 36,
-        "fontColor": "#14b351"
-      },
-      // {
-      //   name: 'example_image',
-      //   type: 'image',
-      //   position: { x: 200, y: 200 },
-      //   width: 60,
-      //   height: 40,
-      // },
-      {
-        "name": "age",
-        "type": "text",
-        "content": "4 years",
-        "position": {
-          "x": 36,
-          "y": 179.46
+        {
+          name: 'age',
+          type: 'text',
+          content: '4 years',
+          position: { x: 36, y: 179.46 },
+          width: 43.38,
+          height: 6.12,
+          fontSize: 12,
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "sex",
-        "type": "text",
-        "content": "Male",
-        "position": {
-          "x": 36,
-          "y": 186.23
+      ],
+      [
+        {
+          name: 'sex',
+          type: 'text',
+          content: 'Male',
+          position: { x: 36, y: 186.23 },
+          width: 43.38,
+          height: 6.12,
+          fontSize: 12,
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "weight",
-        "type": "text",
-        "content": "33 pounds",
-        "position": {
-          "x": 40,
-          "y": 192.99
+        {
+          name: 'weight',
+          type: 'text',
+          content: '33 pounds',
+          position: { x: 40, y: 192.99 },
+          width: 43.38,
+          height: 6.12,
+          fontSize: 12,
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "breed",
-        "type": "text",
-        "content": "Mutt",
-        "position": {
-          "x": 40,
-          "y": 199.09
-        },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      }
-    ]
-  ],
+      ],
+    ],
   };
   return template;
-};
+}
 
 export function getTemplatePlugins() {
   return {
@@ -184,4 +156,4 @@ export function getTemplatePlugins() {
     // UPCE: barcodes.upce,
     // GS1DataMatrix: barcodes.gs1datamatrix,
   };
-};
+}

@@ -8,15 +8,15 @@ import { generate } from "@pdfme/generator";
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
   const domContainerRef = useRef<HTMLDivElement | null>(null);
-  const designerRef = useRef<Designer | null>(null);  // Reference for Designer instance
+  const designerRef = useRef<Designer | null>(null); // Reference for Designer instance
 
   const template: Template = getTemplate(); // Get template outside of useEffect
 
   console.log(template);
-  
+
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
-    console.log('Template:', template); // Log the template to debug
+    console.log("Template:", template); // Log the template to debug
 
     if (domContainerRef.current) {
       // Create and store the Designer instance in the ref
@@ -28,9 +28,8 @@ const PdfMeDesignerComponent = () => {
 
       // Optionally, you can call methods on the designer here, for example:
       // designerRef.current.someMethod();
-
     } else {
-      console.error('Container not found!');
+      console.error("Container not found!");
     }
 
     // Cleanup function if necessary
@@ -44,6 +43,29 @@ const PdfMeDesignerComponent = () => {
       isMounted = false;
     };
   }, [template]); // Update Designer if template changes
+
+  // Updated function to add a new page dynamically
+  const addPage = () => {
+    if (!designerRef.current) return;
+
+    // Get the current template
+    const updatedTemplate = designerRef.current.getTemplate();
+
+    // Clone the schema of the first page, then adjust position for new page
+    const newPage = updatedTemplate.schemas[0].map((field, index) => ({
+      ...field,
+      position: {
+        x: field.position.x,
+        y: field.position.y + (index % 2 === 0 ? 100 : 0), 
+      },
+    }));
+
+    // Add the new page schema to the template
+    updatedTemplate.schemas.push(newPage);
+
+    // Update the designer with the new multi-page template
+    designerRef.current.updateTemplate(updatedTemplate);
+  };
 
   const downloadPDF = async () => {
     if (!designerRef || !designerRef.current) return;
@@ -73,9 +95,14 @@ const PdfMeDesignerComponent = () => {
   };
 
   return (
-    <div id='container'>
-      <button onClick={downloadPDF} className="bg-blue-500 text-white px-4 py-2 mt-4">Download PDF</button>
-      <div id="container" ref={domContainerRef} style={{ width: '100%', height: '100vh', backgroundColor: 'lightgray' }}>
+    <div id="container">
+      <button onClick={addPage} className="bg-green-500 text-white px-4 py-2 mt-4 mr-2">
+        Add Page
+      </button>
+      <button onClick={downloadPDF} className="bg-blue-500 text-white px-4 py-2 mt-4">
+        Download PDF
+      </button>
+      <div id="container" ref={domContainerRef} style={{ width: "100%", height: "100vh", backgroundColor: "lightgray" }}>
         {/* You can add other content or components as needed */}
       </div>
     </div>

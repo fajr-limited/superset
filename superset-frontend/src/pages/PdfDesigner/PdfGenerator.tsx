@@ -4,10 +4,13 @@ import { getTemplate } from "./helper";
 
 const PdfGenerator = () => {
   const handleGeneratePdf = async () => {
-    const template = getTemplate()
+    const template = getTemplate();
 
-    const pdfBytes = await generate({ template, inputs: [{}] });
-    
+    // Create inputs array based on the number of pages
+    const inputs = Array(template.schemas.length).fill({});
+
+    const pdfBytes = await generate({ template, inputs });
+
     // Create a Blob and trigger download
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
@@ -23,7 +26,9 @@ const PdfGenerator = () => {
   return (
     <div>
       <h3>PDF Generator</h3>
-      <button onClick={handleGeneratePdf}>Generate PDF</button>
+      <button onClick={handleGeneratePdf} className="bg-blue-500 text-white px-4 py-2 mt-4">
+        Generate PDF
+      </button>
     </div>
   );
 };
