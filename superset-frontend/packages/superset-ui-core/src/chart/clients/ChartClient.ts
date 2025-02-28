@@ -99,7 +99,7 @@ export default class ChartClient {
     formData: QueryFormData,
     options?: Partial<RequestConfig>,
   ): Promise<QueryData[]> {
-    const visType = formData.viz_type;
+    const { viz_type: visType } = formData;
     const metaDataRegistry = getChartMetadataRegistry();
     const buildQueryRegistry = getChartBuildQueryRegistry();
 
@@ -117,9 +117,7 @@ export default class ChartClient {
           }
         : {
             endpoint: '/api/v1/chart/data',
-            jsonPayload: {
-              query_context: buildQuery(formData),
-            },
+            jsonPayload: buildQuery(formData),
             ...options,
           };
 
