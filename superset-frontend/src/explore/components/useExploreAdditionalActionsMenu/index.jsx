@@ -49,6 +49,8 @@ import {
 import ViewQueryModal from '../controls/ViewQueryModal';
 import EmbedCodeContent from '../EmbedCodeContent';
 import DashboardsSubMenu from './DashboardsSubMenu';
+import { useHistory } from "react-router-dom";
+
 
 const MENU_KEYS = {
   EDIT_PROPERTIES: 'edit_properties',
@@ -210,6 +212,7 @@ export const useExploreAdditionalActionsMenu = (
     }
   }, [addDangerToast, addSuccessToast, latestQueryFormData]);
   
+  const history = useHistory();
   const handleAddTableToPdfDesigner = useCallback(() => {
 
     console.log("slice:", slice);
@@ -246,11 +249,8 @@ export const useExploreAdditionalActionsMenu = (
             };
 
             console.log("Table template:", tableTemplate);
-  
-            history.push({
-              pathname: "/pdf-designer",
-              state: { template: tableTemplate },
-            });
+            history.push("/pdfdesigner"); // ✅ Use the existing history object
+     
           })
           .catch((error) => {
             console.error("Error fetching table data:", error);
@@ -369,7 +369,7 @@ export const useExploreAdditionalActionsMenu = (
   ];
   
   const dropdownMenu = (
-    <Menu onClick={handleMenuClick}>
+    <Menu onClick={handleMenuClick} >
       {menuItems.map(item => (
         <Menu.Item key={item.key}>{item.label}</Menu.Item>
       ))}
