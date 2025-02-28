@@ -4,13 +4,22 @@ import { getInputFromTemplate, type Template } from '@pdfme/common';
 import { getTemplate, getTemplatePlugins } from './helper';
 import { generate } from "@pdfme/generator";
 import { text, image, barcodes } from "@pdfme/schemas";
+import { usePdfDesigner } from './PdfDesignerContext';
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
   const domContainerRef = useRef<HTMLDivElement | null>(null);
   const designerRef = useRef<Designer | null>(null);  // Reference for Designer instance
+  const { template: sessionTemplate } = usePdfDesigner();
 
-  const template: Template = getTemplate(); // Get template outside of useEffect
+  const baseTemplate: Template = getTemplate(); 
+  
+  const template: Template = {
+    ...baseTemplate,
+    schemas: sessionTemplate 
+      ? [...baseTemplate.schemas, sessionTemplate.schemas]
+      : baseTemplate.schemas
+  };
 
   console.log(template);
   

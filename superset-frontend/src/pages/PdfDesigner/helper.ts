@@ -78,7 +78,8 @@ export const isJsonString = (str: string) => {
 
 export function getTemplate(): Template {
   const template: Template = {
-    basePdf: BLANK_PDF,
+    basePdf: { width: 210, height: 297, padding: [10, 10, 10, 10],
+    },
     schemas: [
     [
       {

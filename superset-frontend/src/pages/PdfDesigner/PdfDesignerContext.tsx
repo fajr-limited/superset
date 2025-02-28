@@ -35,8 +35,14 @@ export const PdfDesignerPage = () => {
   const { setTemplate } = usePdfDesigner();
 
   useEffect(() => {
-    if (location.state?.template) {
-      setTemplate(location.state.template);
+    if (location.state?.sessionKey) {
+      const sessionKey = location.state.sessionKey;
+      const templateData = sessionStorage.getItem(sessionKey);
+      if (templateData) {
+        const parsedTemplate = JSON.parse(templateData);
+        setTemplate(parsedTemplate);
+        sessionStorage.removeItem(sessionKey);
+      }
     }
   }, [location.state, setTemplate]);
 

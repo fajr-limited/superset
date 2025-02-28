@@ -49,6 +49,7 @@ import {
 import ViewQueryModal from '../controls/ViewQueryModal';
 import EmbedCodeContent from '../EmbedCodeContent';
 import DashboardsSubMenu from './DashboardsSubMenu';
+import { BLANK_PDF } from "@pdfme/common";
 import { useHistory } from "react-router-dom";
 
 
@@ -214,14 +215,13 @@ export const useExploreAdditionalActionsMenu = (
   
   const history = useHistory();
   const handleAddTableToPdfDesigner = useCallback(() => {
-
     console.log("slice:", slice);
     
     if (slice?.slice_id) {
       const chartClient = new ChartClient();
-      
+    
       console.log("Sending chart identifier:", slice);
-      
+    
       chartClient.loadFormData({sliceId: slice.slice_id}).then((formData) => {
         console.log("Form data:", formData);
         chartClient
@@ -232,11 +232,11 @@ export const useExploreAdditionalActionsMenu = (
             if (tableData.length === 0) {
               console.error("No table data available.");
               return;
-            }
-  
+          }
+
             const headers = response[0].result?.[0]?.colnames || [];
             const rows = tableData.map((row) => Object.values(row));
-  
+
             const tableTemplate = {
               schemas: [
                 {
@@ -249,15 +249,19 @@ export const useExploreAdditionalActionsMenu = (
             };
 
             console.log("Table template:", tableTemplate);
-            history.push("/pdfdesigner"); // ✅ Use the existing history object
-     
+        
+            const sessionKey = 'pdf_designer_template';
+            sessionStorage.setItem(sessionKey, JSON.stringify(tableTemplate));
+          
+            history.push({
+              pathname: "/pdfdesigner",
+              state: { sessionKey }
+            }); // ✅ Use the existing history object with session key
           })
           .catch((error) => {
             console.error("Error fetching table data:", error);
           });
       });
-
-
     }
     setIsDropdownVisible(false);
   }, [slice?.slice_id, history]);
