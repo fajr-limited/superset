@@ -218,10 +218,7 @@ export const useExploreAdditionalActionsMenu = (
       const chartClient = new ChartClient();
 
       const formData = {
-        datasource: {
-          id: 21, 
-          type: "table"
-        },
+        datasource: "21__table",
         viz_type: "table",
         slice_id: 120,
         query_mode: "aggregate",
@@ -253,16 +250,10 @@ export const useExploreAdditionalActionsMenu = (
         },
       ];
       
-      console.log("Sending formData:", { datasource: formData.datasource, queries });
+      console.log("Sending formData:", formData);
       
       chartClient
-        .loadQueryData({
-          datasource: formData.datasource, 
-          form_data: formData,
-          queries,
-          result_format: formData.result_format,
-          result_type: formData.result_type,
-        })
+        .loadQueryData(formData)
         .then((response) => {
           console.log("Response received:", response);
           const tableData = response.result?.[0]?.data || [];

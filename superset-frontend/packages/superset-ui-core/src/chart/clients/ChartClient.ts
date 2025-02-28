@@ -99,7 +99,7 @@ export default class ChartClient {
     formData: QueryFormData,
     options?: Partial<RequestConfig>,
   ): Promise<QueryData[]> {
-    const { viz_type: visType } = formData;
+    const visType = formData.viz_type;
     const metaDataRegistry = getChartMetadataRegistry();
     const buildQueryRegistry = getChartBuildQueryRegistry();
 
