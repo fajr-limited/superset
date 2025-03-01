@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Designer } from '@pdfme/ui';
-import { getInputFromTemplate, type Template } from '@pdfme/common';
+import { getInputFromTemplate, Schema, type Template } from '@pdfme/common';
 import { getTemplate, getTemplatePlugins } from './helper';
 import { generate } from "@pdfme/generator";
 import { text, image, barcodes } from "@pdfme/schemas";
 import { usePdfDesigner } from './PdfDesignerContext';
+import schema from '@pdfme/schemas/dist/types/src/multiVariableText';
+import { template } from 'lodash';
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
@@ -14,15 +16,30 @@ const PdfMeDesignerComponent = () => {
 
   const baseTemplate: Template = getTemplate(); 
   
-  const template: Template = {
-    ...baseTemplate,
-    schemas: sessionTemplate 
-      ? [...baseTemplate.schemas, sessionTemplate.schemas]
-      : baseTemplate.schemas
+
+  const schemastr = JSON.parse(sessionStorage.getItem('pdf_designer_template') || "");
+
+
+  console.log(schemastr.key);
+    
+  const schema : Schema = {
+    "name": schemastr.key,
+    "type": schemastr.type,
+    "content": schemastr.data,
+    "head" : schemastr.columns,
+    "position": {
+      "x": 24.8,
+      "y": 26.61
+    },
+    "width": 77.77,
+    "height": 18.7,
+    "fontSize": 36,
+    "fontColor": "#14b351"
   };
 
-  console.log(template);
-  
+  baseTemplate.schemas[0].push(schema);
+  console.log(baseTemplate);
+
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
     console.log('Template:', template); // Log the template to debug

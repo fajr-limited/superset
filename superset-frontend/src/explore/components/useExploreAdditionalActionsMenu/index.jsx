@@ -238,17 +238,11 @@ export const useExploreAdditionalActionsMenu = (
             const rows = tableData.map((row) => Object.values(row));
 
             const tableTemplate = {
-              schemas: [
-                {
                   key: "table",
                   type: "table",
                   columns: headers,
                   data: rows,
-                },
-              ],
             };
-
-            console.log("Table template:", tableTemplate);
         
             const sessionKey = 'pdf_designer_template';
             sessionStorage.setItem(sessionKey, JSON.stringify(tableTemplate));
