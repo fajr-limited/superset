@@ -237,11 +237,13 @@ export const useExploreAdditionalActionsMenu = (
             const headers = response[0].result?.[0]?.colnames || [];
             const rows = tableData.map((row) => Object.values(row));
 
+            const rowsstr = rows.map(row => row.map(element => String(element)));
+
             const tableTemplate = {
                   key: "table",
                   type: "table",
                   columns: headers,
-                  data: rows,
+                  data: JSON.stringify(rowsstr),
             };
         
             const sessionKey = 'pdf_designer_template';

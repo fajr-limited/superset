@@ -137,18 +137,6 @@ export function getTemplate(): Template {
         "width": 43.38,
         "height": 6.12,
         "fontSize": 12
-      },
-      {
-        "name": "breed",
-        "type": "text",
-        "content": "Mutt",
-        "position": {
-          "x": 40,
-          "y": 199.09
-        },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
       }
     ]
   ],

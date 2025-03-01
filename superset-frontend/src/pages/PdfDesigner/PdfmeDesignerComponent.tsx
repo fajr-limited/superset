@@ -3,46 +3,95 @@ import { Designer } from '@pdfme/ui';
 import { getInputFromTemplate, Schema, type Template } from '@pdfme/common';
 import { getTemplate, getTemplatePlugins } from './helper';
 import { generate } from "@pdfme/generator";
-import { text, image, barcodes } from "@pdfme/schemas";
-import { usePdfDesigner } from './PdfDesignerContext';
-import schema from '@pdfme/schemas/dist/types/src/multiVariableText';
-import { template } from 'lodash';
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
   const domContainerRef = useRef<HTMLDivElement | null>(null);
   const designerRef = useRef<Designer | null>(null);  // Reference for Designer instance
-  const { template: sessionTemplate } = usePdfDesigner();
 
-  const baseTemplate: Template = getTemplate(); 
+  const template: Template = getTemplate(); 
   
 
   const schemastr = JSON.parse(sessionStorage.getItem('pdf_designer_template') || "");
 
-
-  console.log(schemastr.key);
+  // console.log(schemastr.key);
     
   const schema : Schema = {
     "name": schemastr.key,
     "type": schemastr.type,
     "content": schemastr.data,
+    "showHead": true,
     "head" : schemastr.columns,
+    "headWidthPercentages": Array.from({ length: schemastr.columns.length }, () => 100/schemastr.columns.length) ,
     "position": {
       "x": 24.8,
-      "y": 26.61
+      "y": 30.61
     },
     "width": 77.77,
     "height": 18.7,
-    "fontSize": 36,
-    "fontColor": "#14b351"
+    "tableStyles": {
+      "borderWidth": 0.3,
+      "borderColor": "#000000"
+    },
+    "headStyles": {
+        "fontName": "NotoSerifJP-Regular",
+        "fontSize": 13,
+        "characterSpacing": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "lineHeight": 1,
+        "fontColor": "#ffffff",
+        "borderColor": "",
+        "backgroundColor": "#2980ba",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 5,
+          "right": 5,
+          "bottom": 5,
+          "left": 5
+        }
+    },
+    "bodyStyles": {
+      "fontName": "NotoSerifJP-Regular",
+      "fontSize": 13,
+      "characterSpacing": 0,
+      "alignment": "left",
+      "verticalAlignment": "middle",
+      "lineHeight": 1,
+      "fontColor": "#000000",
+      "borderColor": "#888888",
+      "backgroundColor": "",
+      "alternateBackgroundColor": "#f5f5f5",
+      "borderWidth": {
+        "top": 0.1,
+        "right": 0.1,
+        "bottom": 0.1,
+        "left": 0.1
+      },
+      "padding": {
+        "top": 5,
+        "right": 5,
+        "bottom": 5,
+        "left": 5
+      }
+    },
+    "columnStyles": {},
+    "required": false,
+    "readOnly": false
   };
 
-  baseTemplate.schemas[0].push(schema);
-  console.log(baseTemplate);
+
+  template.schemas[0].push(schema);
+  console.log(template.schemas);
 
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
-    console.log('Template:', template); // Log the template to debug
+    // console.log('Template:', template); // Log the template to debug
 
     if (domContainerRef.current) {
       // Create and store the Designer instance in the ref
