@@ -11,29 +11,44 @@ const PdfMeDesignerComponent = () => {
 
   const template: Template = getTemplate(); 
   
-
-  const schemastr = JSON.parse(sessionStorage.getItem('pdf_designer_template') || "");
-
-  // console.log(schemastr.key);
+  const schemastr = JSON.parse(sessionStorage.getItem('pdf_designer_template') || "{}");
+  
+  if (!schemastr.key) {
+    console.log("No table data found in session storage.");
+  } else {
+    const basePdf = template.basePdf as { width: number; height: number; padding: [number, number, number, number] };
     
-  const schema : Schema = {
-    "name": schemastr.key,
-    "type": schemastr.type,
-    "content": schemastr.data,
-    "showHead": true,
-    "head" : schemastr.columns,
-    "headWidthPercentages": Array.from({ length: schemastr.columns.length }, () => 100/schemastr.columns.length) ,
-    "position": {
-      "x": 24.8,
-      "y": 30.61
-    },
-    "width": 77.77,
-    "height": 18.7,
-    "tableStyles": {
-      "borderWidth": 0.3,
-      "borderColor": "#000000"
-    },
-    "headStyles": {
+    const baseSchemas = template.schemas[0];
+    const lastElement = baseSchemas[baseSchemas.length - 1];
+    const startingY = lastElement.position.y + lastElement.height + 10; 
+    const pageWidth = basePdf.width - basePdf.padding[1] - basePdf.padding[3];
+
+    const columnCount = schemastr.columns.length;
+    const rowData = JSON.parse(schemastr.data);
+    const rowCount = rowData.length;
+    const tableWidth = pageWidth * 0.9; 
+    const rowHeight = 10; 
+    const headHeight = 15; 
+    const tableHeight = headHeight + (rowCount * rowHeight); 
+
+    const schema: Schema = {
+      "name": schemastr.key,
+      "type": schemastr.type,
+      "content": schemastr.data, 
+      "showHead": true,
+      "head": schemastr.columns,
+      "headWidthPercentages": Array.from({ length: columnCount }, () => 100 / columnCount),
+      "position": {
+        "x": basePdf.padding[3] + 5,
+        "y": startingY 
+      },
+      "width": tableWidth,
+      "height": tableHeight,
+      "tableStyles": {
+        "borderWidth": 0.3,
+        "borderColor": "#000000"
+      },
+      "headStyles": {
         "fontName": "NotoSerifJP-Regular",
         "fontSize": 13,
         "characterSpacing": 0,
@@ -55,38 +70,45 @@ const PdfMeDesignerComponent = () => {
           "bottom": 5,
           "left": 5
         }
-    },
-    "bodyStyles": {
-      "fontName": "NotoSerifJP-Regular",
-      "fontSize": 13,
-      "characterSpacing": 0,
-      "alignment": "left",
-      "verticalAlignment": "middle",
-      "lineHeight": 1,
-      "fontColor": "#000000",
-      "borderColor": "#888888",
-      "backgroundColor": "",
-      "alternateBackgroundColor": "#f5f5f5",
-      "borderWidth": {
-        "top": 0.1,
-        "right": 0.1,
-        "bottom": 0.1,
-        "left": 0.1
       },
-      "padding": {
-        "top": 5,
-        "right": 5,
-        "bottom": 5,
-        "left": 5
-      }
-    },
-    "columnStyles": {},
-    "required": false,
-    "readOnly": false
-  };
+      "bodyStyles": {
+        "fontName": "NotoSerifJP-Regular",
+        "fontSize": 13,
+        "characterSpacing": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "lineHeight": 1,
+        "fontColor": "#000000",
+        "borderColor": "#888888",
+        "backgroundColor": "",
+        "alternateBackgroundColor": "#f5f5f5",
+        "borderWidth": {
+          "top": 0.1,
+          "right": 0.1,
+          "bottom": 0.1,
+          "left": 0.1
+        },
+        "padding": {
+          "top": 5,
+          "right": 5,
+          "bottom": 5,
+          "left": 5
+        }
+      },
+      "columnStyles": {},
+      "required": false,
+      "readOnly": false
+    };
 
+    const pageHeight = basePdf.height - basePdf.padding[0] - basePdf.padding[2];
+    if (startingY + tableHeight > pageHeight) {
+      console.warn("Table exceeds page height");
+      schema.height = pageHeight - startingY - 5; 
+    }
 
-  template.schemas[0].push(schema);
+    template.schemas[0].push(schema);
+  }
+
   console.log(template.schemas);
 
   useEffect(() => {
