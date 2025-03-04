@@ -85,7 +85,7 @@ export function getTemplate(): Template {
         {
           "name": "letter",
           "type": "multiVariableText",
-          "content": "Dear {name}\n\nI hope you are well.\n\nYours\n{sender_name}",
+          "content": "Dear {{name}}\n\nI hope you are well.\n\nYours\n{{sender_name}}",
           "position": { "x": 20, "y": 20 },
           "width": 170,
           "height": 60,
