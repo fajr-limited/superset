@@ -16,6 +16,7 @@ import {
   checkbox,
   radioGroup,
 } from '@pdfme/schemas';
+
 export const readFile = (
   file: File | null,
   type: "text" | "dataURL" | "arrayBuffer"
@@ -78,79 +79,81 @@ export const isJsonString = (str: string) => {
 
 export function getTemplate(): Template {
   const template: Template = {
-    basePdf: BLANK_PDF,
+    basePdf: { width: 210, height: 297, padding: [10, 10, 10, 10] },
     schemas: [
-    [
-      {
-        "name": "name",
-        "type": "text",
-        "content": "Pet Name",
-        "position": {
-          "x": 24.8,
-          "y": 26.61
+      [
+        {
+          "name": "letter",
+          "type": "multiVariableText",
+          "content": "Dear {{name}}\n\nI hope you are well.\n\nYours\n{{sender_name}}",
+          "position": { "x": 20, "y": 20 },
+          "width": 170,
+          "height": 60,
+          "fontSize": 12,
+          "fontName": "Roboto", 
+          "variables": ["name", "sender_name"],
+          "readOnly": false,
         },
-        "width": 77.77,
-        "height": 18.7,
-        "fontSize": 36,
-        "fontColor": "#14b351"
-      },
-      // {
-      //   name: 'example_image',
-      //   type: 'image',
-      //   position: { x: 200, y: 200 },
-      //   width: 60,
-      //   height: 40,
-      // },
-      {
-        "name": "age",
-        "type": "text",
-        "content": "4 years",
-        "position": {
-          "x": 36,
-          "y": 179.46
+        {
+          "name": "name",
+          "type": "text",
+          "content": "Pet Name",
+          "position": { "x": 24.8, "y": 90 },
+          "width": 77.77,
+          "height": 18.7,
+          "fontSize": 36,
+          "fontColor": "#14b351"
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "sex",
-        "type": "text",
-        "content": "Male",
-        "position": {
-          "x": 36,
-          "y": 186.23
+        // {
+        //   name: 'example_image',
+        //   type: 'image',
+        //   position: { x: 200, y: 200 },
+        //   width: 60,
+        //   height: 40,
+        // },
+        {
+          "name": "age",
+          "type": "text",
+          "content": "4 years",
+          "position": { "x": 36, "y": 115 },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "weight",
-        "type": "text",
-        "content": "33 pounds",
-        "position": {
-          "x": 40,
-          "y": 192.99
+        {
+          "name": "sex",
+          "type": "text",
+          "content": "Male",
+          "position": { "x": 36, "y": 122 },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
-      },
-      {
-        "name": "breed",
-        "type": "text",
-        "content": "Mutt",
-        "position": {
-          "x": 40,
-          "y": 199.09
+        {
+          "name": "weight",
+          "type": "text",
+          "content": "33 pounds",
+          "position": { "x": 40, "y": 129 },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
         },
-        "width": 43.38,
-        "height": 6.12,
-        "fontSize": 12
+        {
+          "name": "breed",
+          "type": "text",
+          "content": "Mutt",
+          "position": { "x": 40, "y": 136 },
+          "width": 43.38,
+          "height": 6.12,
+          "fontSize": 12
+        }
+      ]
+    ],
+    sampledata: [
+      {
+        "letter": JSON.stringify({ "name": "Alice", "sender_name": "Bob" })
       }
     ]
-  ],
   };
   return template;
 };
