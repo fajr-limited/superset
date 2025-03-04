@@ -57,6 +57,8 @@ const PdfMeDesignerComponent = () => {
 
     const plugins = getTemplatePlugins();
     const inputs = getInputFromTemplate(updatedTemplate);
+    console.log('Inputs:', inputs); 
+
     // Generate PDF
     const pdfBuffer = await generate({ template: updatedTemplate, inputs, plugins });
 
