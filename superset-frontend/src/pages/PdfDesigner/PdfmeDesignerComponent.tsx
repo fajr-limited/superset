@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Designer } from '@pdfme/ui';
 import { getInputFromTemplate, type Template } from '@pdfme/common';
-import { getTemplate, getTemplatePlugins } from './helper';
+import { getTemplate, getTemplatePlugins, readFile, cloneDeep, getTemplateFromJsonFile } from './helper';
 import { generate } from "@pdfme/generator";
 import { text, image, barcodes } from "@pdfme/schemas";
 
@@ -50,6 +50,7 @@ const PdfMeDesignerComponent = () => {
 
     // Get the updated template from the Designer UI
     const updatedTemplate = designerRef.current.getTemplate();
+    console.log('Updated Template:', updatedTemplate);
 
     // Insert user input data into the PDF fields
     // const inputs = [formData];
@@ -72,10 +73,63 @@ const PdfMeDesignerComponent = () => {
     // document.body.removeChild(link);
   };
 
+  const onChangeBasePDF = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      readFile(e.target.files[0], "dataURL").then(async (basePdf) => {
+        if (designerRef.current) {
+          const newTemplate = cloneDeep(designerRef.current.getTemplate());
+          newTemplate.basePdf = basePdf;
+          designerRef.current.updateTemplate(newTemplate);
+        }
+      });
+    }
+  };
+
+  const handleLoadTemplate = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    currentRef: Designer | null
+  ) => {
+    if (e.target && e.target.files && e.target.files[0]) {
+      getTemplateFromJsonFile(e.target.files[0])
+        .then((t) => {
+          if (!currentRef) return;
+          currentRef.updateTemplate(t);
+        })
+        .catch((e) => {
+          alert(`Invalid template file. -${e}`);
+        });
+    }
+  };
+
   return (
     <div id='container'>
-      <button onClick={downloadPDF} className="bg-blue-500 text-white px-4 py-2 mt-4">Download PDF</button>
-      <div id="container" ref={domContainerRef} style={{ width: '100%', height: '100vh', backgroundColor: 'lightgray' }}>
+      <div className="flex space-x-4 mb-4 items-center">
+        <button
+          onClick={downloadPDF}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Download PDF
+        </button>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Change BasePDF</label>
+          <input
+            type="file"
+            accept="application/pdf"
+            className="mt-1 w-full text-sm border rounded"
+            onChange={onChangeBasePDF}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Load Template</label>
+          <input
+            type="file"
+            accept="application/json"
+            className="mt-1 w-full text-sm border rounded"
+            onChange={(e) => handleLoadTemplate(e, designerRef.current)}
+          />
+        </div>
+      </div>
+      <div id="container" ref={domContainerRef} style={{ width: '100%', height: 'calc(100vh - 120px)', backgroundColor: 'lightgray' }}>
         {/* You can add other content or components as needed */}
       </div>
     </div>
