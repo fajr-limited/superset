@@ -3,7 +3,7 @@ import { Designer } from '@pdfme/ui';
 import { getInputFromTemplate, type Template } from '@pdfme/common';
 import { getTemplate, getTemplatePlugins } from './helper';
 import { generate } from "@pdfme/generator";
-import { text, image, barcodes } from "@pdfme/schemas";
+import { text, image, barcodes } from "@pdfme.schemas";
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
@@ -50,15 +50,14 @@ const PdfMeDesignerComponent = () => {
 
     // Get the updated template from the Designer UI
     const updatedTemplate = designerRef.current.getTemplate();
+    console.log('Updated Template:', updatedTemplate);
 
-    // Insert user input data into the PDF fields
-    // const inputs = [formData];
-    console.log(updatedTemplate);
+    const inputs = [
+      { "letter": JSON.stringify({ "name": "Alice", "sender_name": "Bob" }) }
+    ];
+    console.log('Inputs:', inputs);
 
     const plugins = getTemplatePlugins();
-    const inputs = getInputFromTemplate(updatedTemplate);
-    console.log('Inputs:', inputs); 
-
     // Generate PDF
     const pdfBuffer = await generate({ template: updatedTemplate, inputs, plugins });
 

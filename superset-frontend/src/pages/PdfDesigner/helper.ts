@@ -149,10 +149,8 @@ export function getTemplate(): Template {
         }
       ]
     ],
-    sampledata: [
-      {
-        "letter": JSON.stringify({ "name": "Alice", "sender_name": "Bob" })
-      }
+    inputs: [
+        { "name": "Alice", "sender_name": "Bob" }
     ]
   };
   return template;
