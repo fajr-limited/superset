@@ -24,10 +24,11 @@ from flask import current_app
 
 from superset import security_manager, thumbnail_cache
 from superset.extensions import celery_app
+from superset.models.pdf_template import PdfTemplate
 from superset.security.guest_token import GuestToken
 from superset.tasks.utils import get_executor
 from superset.utils.core import override_user
-from superset.utils.screenshots import ChartScreenshot, DashboardScreenshot
+from superset.utils.screenshots import ChartScreenshot, DashboardScreenshot, PdfTemplateScreenshot
 from superset.utils.urls import get_url_path
 from superset.utils.webdriver import WindowSize
 
@@ -151,3 +152,41 @@ def cache_dashboard_screenshot(  # pylint: disable=too-many-arguments
             thumb_size=thumb_size,
             cache_key=cache_key,
         )
+
+
+@celery_app.task(name="cache_pdf_template_thumbnail", soft_time_limit=300)
+def cache_pdf_template_thumbnail(
+    current_user: Optional[str],
+    chart_id: int,
+    force: bool = False,
+    window_size: Optional[WindowSize] = None,
+    thumb_size: Optional[WindowSize] = None,
+) -> None:
+    # pylint: disable=import-outside-toplevel
+    from superset.models.slice import Slice
+
+    if not thumbnail_cache:
+        logger.warning("No cache set, refusing to compute")
+        return None
+    chart = cast(PdfTemplate, PdfTemplate.get(chart_id))
+    if not chart:
+        logger.warning("No chart found, skip computing chart thumbnail")
+        return None
+    url = get_url_path("Superset.pdf_template", slice_id=chart.id)
+    logger.info("Caching chart: %s", url)
+    _, username = get_executor(
+        executors=current_app.config["THUMBNAIL_EXECUTORS"],
+        model=chart,
+        current_user=current_user,
+    )
+    user = security_manager.find_user(username)
+    with override_user(user):
+        screenshot = PdfTemplateScreenshot(url, chart.digest)
+        screenshot.compute_and_cache(
+            user=user,
+            cache=thumbnail_cache,
+            force=force,
+            window_size=window_size,
+            thumb_size=thumb_size,
+        )
+    return None
