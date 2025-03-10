@@ -16,6 +16,7 @@ import {
   checkbox,
   radioGroup,
 } from '@pdfme/schemas';
+
 export const readFile = (
   file: File | null,
   type: "text" | "dataURL" | "arrayBuffer"
