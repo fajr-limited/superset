@@ -12,11 +12,14 @@ import {
 } from './helper';
 import { generate } from '@pdfme/generator';
 import { text, image, barcodes } from '@pdfme/schemas';
+import Button from '../../components/Button'; 
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
   const domContainerRef = useRef<HTMLDivElement | null>(null);
-  const designerRef = useRef<Designer | null>(null);  // Reference for Designer instance
+  const designerRef = useRef<Designer | null>(null); 
+  const basePdfInputRef = useRef<HTMLInputElement | null>(null);
+  const templateInputRef = useRef<HTMLInputElement | null>(null);
 
   const template: Template = getTemplate(); // Get template outside of useEffect
 
@@ -74,7 +77,7 @@ const PdfMeDesignerComponent = () => {
     });
 
     // Create a download link
-    const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
     window.open(URL.createObjectURL(blob));
     // const link = document.createElement("a");
     // link.href = URL.createObjectURL(blob);
@@ -129,111 +132,55 @@ const PdfMeDesignerComponent = () => {
   return (
     <div id="container">
       <div
-        className="flex items-center justify-start w-full mb-4"
-        style={{ margin: 0, padding: 0 }}
+        style={{
+          margin: 0,
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: '8px', 
+          width: '100%',
+          overflowX: 'auto', 
+        }}
       >
-        <button
-          onClick={downloadPDF}
-          className="px-4 py-2 rounded flex-none mr-12"
-          style={{
-            backgroundColor: '#E5F0FF',
-            color: '#0052CC',
-            border: '1px solid #E5F0FF',
-            borderRadius: '4px', 
-            transition: 'all 0.3s', 
-            boxShadow: 'none', 
-            marginRight: '114px',
-          }}
-        >
+        <Button buttonStyle="secondary" onClick={downloadPDF}>
           Download PDF
-        </button>
-        <button
-          className="px-2 py-1 rounded flex-none mr-4"
-          style={{
-            backgroundColor: '#E5F0FF',
-            color: '#0052CC',
-            border: '1px solid #E5F0FF',
-            borderRadius: '4px', 
-            transition: 'all 0.3s', 
-            boxShadow: 'none', 
-            marginRight: '114px',
-          }}
-          onClick={onResetTemplate}
-        >
-          Reset
-        </button>
-        <button
-          className="px-2 py-1 rounded flex-none mr-4"
-          style={{
-            backgroundColor: '#E5F0FF',
-            color: '#0052CC',
-            border: '1px solid #E5F0FF',
-            borderRadius: '4px', 
-            transition: 'all 0.3s', 
-            boxShadow: 'none', 
-            marginRight: '114px',
-          }}
-          onClick={onDownloadTemplate}
-        >
-          DL Template
-        </button>
-        <button
-          className="px-2 py-1 rounded flex-none mr-4"
-          style={{
-            backgroundColor: '#E5F0FF',
-            color: '#0052CC',
-            border: '1px solid #E5F0FF',
-            borderRadius: '4px', 
-            transition: 'all 0.3s', 
-            boxShadow: 'none', 
-            marginRight: '114px',
-          }}
-          onClick={() => {}}
-        >
-          Save
-        </button>
-        <label
-          className="text-sm font-medium flex-none mr-4"
-          style={{ color: '#0052CC', marginRight: '16px' }}
-        >
-          Change BasePDF
-          <input
-            type="file"
-            accept="application/pdf"
-            className="text-sm border rounded ml-2"
-            style={{
-              backgroundColor: '#E5F0FF',
-              color: '#0052CC',
-              border: '1px solid #E5F0FF',
-              borderRadius: '4px', 
-              padding: '2px 8px',
-              outline: 'none',
-              fontSize: '14px',
-            }}
-            onChange={onChangeBasePDF}
-          />
-        </label>
-        <label
-          className="text-sm font-medium flex-none"
-          style={{ color: '#0052CC' }}
+        </Button>
+        <Button buttonStyle="secondary" onClick={onDownloadTemplate}>
+          Download Template
+        </Button>
+        <input
+          type="file"
+          accept="application/json"
+          className="hidden"
+          ref={templateInputRef}
+          onChange={e => handleLoadTemplate(e, designerRef.current)}
+        />
+        <Button
+          buttonStyle="secondary"
+          onClick={() => templateInputRef.current?.click()}
         >
           Load Template
-          <input
-            type="file"
-            accept="application/json"
-            className="text-sm border rounded ml-2"
-            style={{
-              backgroundColor: '#E5F0FF',
-              color: '#0052CC',
-              border: '1px solid #E5F0FF',
-              borderRadius: '4px', 
-              padding: '2px 8px',
-              outline: 'none',
-              fontSize: '14px',
-            }}
-            onChange={e => handleLoadTemplate(e, designerRef.current)}
-          />
-        </label>
+        </Button>
+        <input
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          ref={basePdfInputRef}
+          onChange={onChangeBasePDF}
+        />
+        <Button
+          buttonStyle="secondary"
+          onClick={() => basePdfInputRef.current?.click()}
+        >
+          Change Base PDF
+        </Button>
+        <Button buttonStyle="secondary" onClick={() => {}}>
+          Save
+        </Button>
+        <Button buttonStyle="secondary" onClick={onResetTemplate}>
+          Reset
+        </Button>
       </div>
       <div
         id="container"
@@ -242,6 +189,7 @@ const PdfMeDesignerComponent = () => {
           width: '100%',
           height: 'calc(100vh - 60px)',
           backgroundColor: 'lightgray',
+          marginTop: '5px', 
         }}
       >
         {/* You can add other content or components as needed */}
