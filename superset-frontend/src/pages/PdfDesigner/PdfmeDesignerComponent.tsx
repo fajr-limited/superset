@@ -1,9 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { Designer } from '@pdfme/ui';
 import { getInputFromTemplate, type Template } from '@pdfme/common';
-import { getTemplate, getTemplatePlugins, readFile, cloneDeep, getTemplateFromJsonFile } from './helper';
-import { generate } from "@pdfme/generator";
-import { text, image, barcodes } from "@pdfme/schemas";
+import {
+  getTemplate,
+  getTemplatePlugins,
+  readFile,
+  cloneDeep,
+  getTemplateFromJsonFile,
+  getBlankTemplate,
+  downloadJsonFile,
+} from './helper';
+import { generate } from '@pdfme/generator';
+import { text, image, barcodes } from '@pdfme/schemas';
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
@@ -59,7 +67,11 @@ const PdfMeDesignerComponent = () => {
     const plugins = getTemplatePlugins();
     const inputs = getInputFromTemplate(updatedTemplate);
     // Generate PDF
-    const pdfBuffer = await generate({ template: updatedTemplate, inputs, plugins });
+    const pdfBuffer = await generate({
+      template: updatedTemplate,
+      inputs,
+      plugins,
+    });
 
     // Create a download link
     const blob = new Blob([pdfBuffer], { type: "application/pdf" });
@@ -75,7 +87,7 @@ const PdfMeDesignerComponent = () => {
 
   const onChangeBasePDF = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      readFile(e.target.files[0], "dataURL").then(async (basePdf) => {
+      readFile(e.target.files[0], 'dataURL').then(async basePdf => {
         if (designerRef.current) {
           const newTemplate = cloneDeep(designerRef.current.getTemplate());
           newTemplate.basePdf = basePdf;
@@ -87,49 +99,151 @@ const PdfMeDesignerComponent = () => {
 
   const handleLoadTemplate = (
     e: React.ChangeEvent<HTMLInputElement>,
-    currentRef: Designer | null
+    currentRef: Designer | null,
   ) => {
     if (e.target && e.target.files && e.target.files[0]) {
       getTemplateFromJsonFile(e.target.files[0])
-        .then((t) => {
+        .then(t => {
           if (!currentRef) return;
           currentRef.updateTemplate(t);
         })
-        .catch((e) => {
+        .catch(e => {
           alert(`Invalid template file. -${e}`);
         });
     }
   };
 
+  const onResetTemplate = () => {
+    localStorage.removeItem('template');
+    if (designerRef.current) {
+      designerRef.current.updateTemplate(getBlankTemplate());
+    }
+  };
+
+  const onDownloadTemplate = () => {
+    if (designerRef.current) {
+      downloadJsonFile(designerRef.current.getTemplate(), 'template');
+    }
+  };
+
   return (
-    <div id='container'>
-      <div className="flex space-x-4 mb-4 items-center">
+    <div id="container">
+      <div
+        className="flex items-center justify-start w-full mb-4"
+        style={{ margin: 0, padding: 0 }}
+      >
         <button
           onClick={downloadPDF}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="px-4 py-2 rounded flex-none mr-12"
+          style={{
+            backgroundColor: '#E5F0FF',
+            color: '#0052CC',
+            border: '1px solid #E5F0FF',
+            borderRadius: '4px', 
+            transition: 'all 0.3s', 
+            boxShadow: 'none', 
+            marginRight: '114px',
+          }}
         >
           Download PDF
         </button>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Change BasePDF</label>
+        <button
+          className="px-2 py-1 rounded flex-none mr-4"
+          style={{
+            backgroundColor: '#E5F0FF',
+            color: '#0052CC',
+            border: '1px solid #E5F0FF',
+            borderRadius: '4px', 
+            transition: 'all 0.3s', 
+            boxShadow: 'none', 
+            marginRight: '114px',
+          }}
+          onClick={onResetTemplate}
+        >
+          Reset
+        </button>
+        <button
+          className="px-2 py-1 rounded flex-none mr-4"
+          style={{
+            backgroundColor: '#E5F0FF',
+            color: '#0052CC',
+            border: '1px solid #E5F0FF',
+            borderRadius: '4px', 
+            transition: 'all 0.3s', 
+            boxShadow: 'none', 
+            marginRight: '114px',
+          }}
+          onClick={onDownloadTemplate}
+        >
+          DL Template
+        </button>
+        <button
+          className="px-2 py-1 rounded flex-none mr-4"
+          style={{
+            backgroundColor: '#E5F0FF',
+            color: '#0052CC',
+            border: '1px solid #E5F0FF',
+            borderRadius: '4px', 
+            transition: 'all 0.3s', 
+            boxShadow: 'none', 
+            marginRight: '114px',
+          }}
+          onClick={() => {}}
+        >
+          Save
+        </button>
+        <label
+          className="text-sm font-medium flex-none mr-4"
+          style={{ color: '#0052CC', marginRight: '16px' }}
+        >
+          Change BasePDF
           <input
             type="file"
             accept="application/pdf"
-            className="mt-1 w-full text-sm border rounded"
+            className="text-sm border rounded ml-2"
+            style={{
+              backgroundColor: '#E5F0FF',
+              color: '#0052CC',
+              border: '1px solid #E5F0FF',
+              borderRadius: '4px', 
+              padding: '2px 8px',
+              outline: 'none',
+              fontSize: '14px',
+            }}
             onChange={onChangeBasePDF}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Load Template</label>
+        </label>
+        <label
+          className="text-sm font-medium flex-none"
+          style={{ color: '#0052CC' }}
+        >
+          Load Template
           <input
             type="file"
             accept="application/json"
-            className="mt-1 w-full text-sm border rounded"
-            onChange={(e) => handleLoadTemplate(e, designerRef.current)}
+            className="text-sm border rounded ml-2"
+            style={{
+              backgroundColor: '#E5F0FF',
+              color: '#0052CC',
+              border: '1px solid #E5F0FF',
+              borderRadius: '4px', 
+              padding: '2px 8px',
+              outline: 'none',
+              fontSize: '14px',
+            }}
+            onChange={e => handleLoadTemplate(e, designerRef.current)}
           />
-        </div>
+        </label>
       </div>
-      <div id="container" ref={domContainerRef} style={{ width: '100%', height: 'calc(100vh - 120px)', backgroundColor: 'lightgray' }}>
+      <div
+        id="container"
+        ref={domContainerRef}
+        style={{
+          width: '100%',
+          height: 'calc(100vh - 60px)',
+          backgroundColor: 'lightgray',
+        }}
+      >
         {/* You can add other content or components as needed */}
       </div>
     </div>

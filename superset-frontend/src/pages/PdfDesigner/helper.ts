@@ -16,6 +16,7 @@ import {
   checkbox,
   radioGroup,
 } from '@pdfme/schemas';
+
 export const readFile = (
   file: File | null,
   type: "text" | "dataURL" | "arrayBuffer"
@@ -185,3 +186,10 @@ export function getTemplatePlugins() {
     // GS1DataMatrix: barcodes.gs1datamatrix,
   };
 };
+
+export function getBlankTemplate(): Template {
+  return {
+    basePdf: BLANK_PDF,
+    schemas: [[]],
+  };
+}
