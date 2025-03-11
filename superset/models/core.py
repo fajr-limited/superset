@@ -1233,6 +1233,7 @@ class Log(Model):  # pylint: disable=too-few-public-methods
 class FavStarClassName(StrEnum):
     CHART = "slice"
     DASHBOARD = "Dashboard"
+    PDF_TEMPLATE = "PdfTemplate"
 
 
 class FavStar(UUIDMixin, Model):

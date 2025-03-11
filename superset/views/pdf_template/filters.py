@@ -14,6 +14,18 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from . import core, dynamic_plugins, sql_lab, user_attributes  # noqa: F401
+from typing import Any
 
-from superset.models.pdf_template import PdfTemplate
+from sqlalchemy.orm.query import Query
+
+from superset import security_manager
+from superset.utils.filters import get_dataset_access_filters
+from superset.views.base import BaseFilter
+
+
+class PdfTemplateFilter(BaseFilter):  # pylint: disable=too-few-public-methods
+    def apply(self, query: Query, value: Any) -> Query:
+        if security_manager.can_access_all_datasources():
+            return query
+
+        return query.filter(get_dataset_access_filters(self.model))

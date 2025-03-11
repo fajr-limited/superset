@@ -61,7 +61,7 @@ function test_init() {
 #
 # Init global vars
 #
-DB_NAME="test"
+DB_NAME="superset_local"
 DB_USER="superset"
 DB_PASSWORD="superset"
 

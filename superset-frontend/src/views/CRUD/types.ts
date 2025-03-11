@@ -135,7 +135,8 @@ export type ImportResourceName =
   | 'dashboard'
   | 'database'
   | 'dataset'
-  | 'saved_query';
+  | 'saved_query'
+  | 'pdf_template';
 
 export interface Tag {
   changed_on_delta_humanized: string;

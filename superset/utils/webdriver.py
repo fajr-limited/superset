@@ -70,6 +70,11 @@ class ChartStandaloneMode(Enum):
     SHOW_NAV = 0
 
 
+class PdfTemplateStandaloneMode(Enum):
+    HIDE_NAV = "true"
+    SHOW_NAV = 0
+
+
 # pylint: disable=too-few-public-methods
 class WebDriverProxy(ABC):
     def __init__(self, driver_type: str, window: WindowSize | None = None):
