@@ -225,10 +225,6 @@ export const routes: Routes = [
   {
     path: '/sqllab/',
     Component: SqlLab,
-  },
-  {
-    path: '/pdf_template/list/',
-    Component: PdfTemplateList,
   }
 ];
 
