@@ -21,7 +21,6 @@ import { lazy, ComponentType, ComponentProps } from 'react';
 
 // not lazy loaded since this is the home page.
 import Home from 'src/pages/Home';
-import PdfTemplateList from 'src/pages/PdfTemplateList';
 
 const ChartCreation = lazy(
   () =>
@@ -225,7 +224,7 @@ export const routes: Routes = [
   {
     path: '/sqllab/',
     Component: SqlLab,
-  }
+  },
 ];
 
 if (isFeatureEnabled(FeatureFlag.TaggingSystem)) {
