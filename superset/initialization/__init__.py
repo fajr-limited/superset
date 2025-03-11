@@ -128,6 +128,7 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         from superset.available_domains.api import AvailableDomainsRestApi
         from superset.cachekeys.api import CacheRestApi
         from superset.charts.api import ChartRestApi
+        from superset.pdf_templates.api import PdfTemplateRestApi
         from superset.charts.data.api import ChartDataRestApi
         from superset.connectors.sqla.views import (
             RowLevelSecurityView,
@@ -164,6 +165,7 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         from superset.views.annotations import AnnotationLayerView
         from superset.views.api import Api
         from superset.views.chart.views import SliceAsync, SliceModelView
+        from superset.views.pdf_template.views import PdfTemplateModelView
         from superset.views.core import Superset
         from superset.views.css_templates import CssTemplateModelView
         from superset.views.dashboard.views import (
@@ -216,6 +218,7 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_api(ExploreFormDataRestApi)
         appbuilder.add_api(ExplorePermalinkRestApi)
         appbuilder.add_api(ImportExportRestApi)
+        appbuilder.add_api(PdfTemplateRestApi)
         appbuilder.add_api(QueryRestApi)
         appbuilder.add_api(ReportScheduleRestApi)
         appbuilder.add_api(ReportExecutionLogRestApi)
@@ -257,6 +260,22 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
             icon="fa-bar-chart",
             category="",
             category_icon="",
+        ),
+        appbuilder.add_view(
+            PdfTemplateModelView,
+            "PdfTemplates",
+            label=__("Pdf Templates"),
+            icon="fa-flask",
+            category="",
+            category_icon="",
+        )
+        appbuilder.add_link(
+            "Pdf Designer",
+            label=__("Pdf Designer"),
+            href="/pdfdesigner/",
+            category_icon="fa-flask",
+            icon="fa-flask",
+            category="",
         )
 
         appbuilder.add_link(

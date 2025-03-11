@@ -42,6 +42,7 @@ import copyTextToClipboard from 'src/utils/copy';
 import SupersetText from 'src/utils/textUtils';
 import { DatabaseObject } from 'src/features/databases/types';
 import { FavoriteStatus, ImportResourceName } from './types';
+import PdfTemplate from 'src/types/PdfTemplate';
 
 interface ListViewResourceState<D extends object = any> {
   loading: boolean;
@@ -577,10 +578,15 @@ const favoriteApis = {
     method: 'GET',
     endpoint: '/api/v1/tag/favorite_status/',
   }),
+  pdf_template: makeApi<Array<string | number>, FavoriteStatusResponse>({
+    requestType: 'rison',
+    method: 'GET',
+    endpoint: '/api/v1/pdf_template/favorite_status/',
+  }),
 };
 
 export function useFavoriteStatus(
-  type: 'chart' | 'dashboard' | 'tag',
+  type: 'chart' | 'dashboard' | 'tag' | 'pdf_template',
   ids: Array<string | number>,
   handleErrorMsg: (message: string) => void,
 ) {
@@ -675,6 +681,7 @@ export const useChartEditModal = (
     closeChartEditModal,
   };
 };
+
 
 export const copyQueryLink = (
   id: number,

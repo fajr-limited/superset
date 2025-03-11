@@ -30,6 +30,7 @@ from superset.utils.urls import modify_url_query
 from superset.utils.webdriver import (
     ChartStandaloneMode,
     DashboardStandaloneMode,
+    PdfTemplateStandaloneMode,
     WebDriver,
     WebDriverPlaywright,
     WebDriverSelenium,
@@ -282,3 +283,26 @@ class DashboardScreenshot(BaseScreenshot):
             "dashboard_state": dashboard_state,
         }
         return md5_sha_from_dict(args)
+
+
+
+class PdfTemplateScreenshot(BaseScreenshot):
+    thumbnail_type: str = "pdf_template"
+    element: str = "pdf_template-container"
+
+    def __init__(
+        self,
+        url: str,
+        digest: str | None,
+        window_size: WindowSize | None = None,
+        thumb_size: WindowSize | None = None,
+    ):
+        # Pdf Template reports are in standalone="true" mode
+        url = modify_url_query(
+            url,
+            standalone=PdfTemplateStandaloneMode.HIDE_NAV.value,
+        )
+        super().__init__(url, digest)
+        self.window_size = window_size or DEFAULT_CHART_WINDOW_SIZE
+        self.thumb_size = thumb_size or DEFAULT_CHART_THUMBNAIL_SIZE
+

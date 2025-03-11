@@ -36,6 +36,7 @@ import { findPermission } from 'src/utils/findPermission';
 import { User } from 'src/types/bootstrapTypes';
 import { WelcomeTable } from 'src/features/home/types';
 import { Dashboard, Filter, TableTab } from './types';
+import PdfTemplate from 'src/types/PdfTemplate';
 
 // Modifies the rison encoding slightly to match the backend's rison encoding/decoding. Applies globally.
 // Code pulled from rison.js (https://github.com/Nanonid/rison), rison is licensed under the MIT license.
@@ -335,6 +336,45 @@ export function handleDashboardDelete(
         t('There was an issue deleting %s: %s', dashboardTitle, errMsg),
       ),
     ),
+  );
+}
+
+export function handlePdfTemplateDelete(
+  { id, name: sliceName }: PdfTemplate,
+  addSuccessToast: (arg0: string) => void,
+  addDangerToast: (arg0: string) => void,
+  refreshData: (arg0?: FetchDataConfig | null) => void,
+  chartFilter?: string,
+  userId?: string | number,
+) {
+  const filters = {
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+    sortBy: [
+      {
+        id: 'changed_on_delta_humanized',
+        desc: true,
+      },
+    ],
+    filters: [
+      {
+        id: 'created_by',
+        operator: 'rel_o_m',
+        value: `${userId}`,
+      },
+    ],
+  };
+  SupersetClient.delete({
+    endpoint: `/api/v1/pdf_template/${id}`,
+  }).then(
+    () => {
+      if (chartFilter === 'Mine') refreshData(filters);
+      else refreshData();
+      addSuccessToast(t('Deleted: %s', sliceName));
+    },
+    () => {
+      addDangerToast(t('There was an issue deleting: %s', sliceName));
+    },
   );
 }
 

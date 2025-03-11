@@ -123,4 +123,8 @@ export enum FilterOperator {
   ChartTagById = 'chart_tag_id',
   SavedQueryTagByName = 'saved_query_tags',
   SavedQueryTagById = 'saved_query_tag_id',
+  PdfTemplateIsFav = 'pdf_template_is_favorite',
+  PdfTemplateAllText = 'pdf_template_all_text',
+  PdfTemplateTagById = 'pdf_template_tag_id',
+
 }

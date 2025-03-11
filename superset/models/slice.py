@@ -109,6 +109,7 @@ class Slice(  # pylint: disable=too-many-public-methods
         secondaryjoin="TaggedObject.tag_id == Tag.id",
         viewonly=True,  # cascading deletion already handled by superset.tags.models.ObjectUpdater.after_delete  # noqa: E501
     )
+    
     table = relationship(
         "SqlaTable",
         foreign_keys=[datasource_id],
