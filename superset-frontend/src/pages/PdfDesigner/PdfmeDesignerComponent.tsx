@@ -129,6 +129,38 @@ const PdfMeDesignerComponent = () => {
     }
   };
 
+  const onSaveTemplate = async () => {
+    if (!designerRef.current) {
+      alert('Designer instance not available!');
+      return;
+    }
+
+    const updatedTemplate = designerRef.current.getTemplate();
+    console.log('Saving Template:', updatedTemplate);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8088/api/v1/pdf_template/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTemplate), 
+        credentials: 'include', 
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      alert('Template saved successfully! ID: ' + result.id);
+      console.log('Save Response:', result);
+    } catch (error) {
+      alert('Failed to save template: ' + (error as Error).message);
+      console.error('Save Error:', error);
+    }
+  };
+
   return (
     <div id="container">
       <div
@@ -175,7 +207,7 @@ const PdfMeDesignerComponent = () => {
         >
           Change Base PDF
         </Button>
-        <Button buttonStyle="secondary" onClick={() => {}}>
+        <Button buttonStyle="secondary" onClick={onSaveTemplate}>
           Save
         </Button>
         <Button buttonStyle="secondary" onClick={onResetTemplate}>
