@@ -138,18 +138,26 @@ const PdfMeDesignerComponent = () => {
     const updatedTemplate = designerRef.current.getTemplate();
     console.log('Saving Template:', updatedTemplate);
 
+    const payload = {
+      name: 'Custom Template',
+      description: 'Template from Pdf Designer', 
+      data: updatedTemplate, 
+    };
+
     try {
       const response = await fetch('http://127.0.0.1:8088/api/v1/pdf_template/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedTemplate), 
+        body: JSON.stringify(payload), 
         credentials: 'include', 
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text(); 
+        console.error('Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
