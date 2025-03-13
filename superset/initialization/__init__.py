@@ -278,6 +278,7 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
             category="",
         )
 
+
         appbuilder.add_link(
             "Datasets",
             label=__("Datasets"),
