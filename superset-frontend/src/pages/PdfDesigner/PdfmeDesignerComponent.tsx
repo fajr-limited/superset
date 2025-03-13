@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback, Dispatch, SetStateAction, useMemo } from 'react';
 import { Designer } from '@pdfme/ui';
 import { getInputFromTemplate, type Template } from '@pdfme/common';
 import {
@@ -12,7 +12,65 @@ import {
 } from './helper';
 import { generate } from '@pdfme/generator';
 import { text, image, barcodes } from '@pdfme/schemas';
-import Button from '../../components/Button'; 
+import Button from '../../components/Button';
+import ReactDOM from 'react-dom';
+import { makeApi, getClientErrorObject, JsonObject } from '@superset-ui/core'; 
+import './index.css';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => Promise<void>;
+  name: string;
+  setName: Dispatch<SetStateAction<string>>;
+  description: string;
+  setDescription: Dispatch<SetStateAction<string>>;
+}
+
+const Modal = React.memo(({ isOpen, onClose, onSave, name, setName, description, setDescription }: ModalProps) => {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Save Template</h2>
+        <div className="modal-field">
+          <label>Name:</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="modal-input"
+            placeholder="Enter template name"
+          />
+        </div>
+        <div className="modal-field">
+          <label>Description:</label>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="modal-input"
+            placeholder="Enter template description"
+          />
+        </div>
+        <div>
+          <Button buttonStyle="secondary" onClick={onSave}>
+            Save
+          </Button>
+          <Button
+            buttonStyle="secondary"
+            onClick={onClose}
+            className="modal-cancel-button"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+});
 
 const PdfMeDesignerComponent = () => {
   // Create a reference to store the Designer instance
@@ -21,13 +79,13 @@ const PdfMeDesignerComponent = () => {
   const basePdfInputRef = useRef<HTMLInputElement | null>(null);
   const templateInputRef = useRef<HTMLInputElement | null>(null);
 
-  const template: Template = getTemplate(); // Get template outside of useEffect
+  const template: Template = useMemo(() => getTemplate(), []); 
 
-  console.log(template);
+  console.log('Initial Template:', template);
   
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
-    console.log('Template:', template); // Log the template to debug
+    console.log('Template in useEffect:', template); 
 
     if (domContainerRef.current) {
       // Create and store the Designer instance in the ref
@@ -79,13 +137,6 @@ const PdfMeDesignerComponent = () => {
     // Create a download link
     const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
     window.open(URL.createObjectURL(blob));
-    // const link = document.createElement("a");
-    // link.href = URL.createObjectURL(blob);
-
-    // link.download = "customized.pdf";
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
   };
 
   const onChangeBasePDF = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +180,11 @@ const PdfMeDesignerComponent = () => {
     }
   };
 
-  const onSaveTemplate = async () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSave = useCallback(async () => {
     if (!designerRef.current) {
       alert('Designer instance not available!');
       return;
@@ -137,51 +192,47 @@ const PdfMeDesignerComponent = () => {
 
     const updatedTemplate = designerRef.current.getTemplate();
     console.log('Saving Template:', updatedTemplate);
+    console.log('Schemas before saving:', updatedTemplate.schemas);
 
     const payload = {
-      name: 'Custom Template',
-      description: 'Template from Pdf Designer', 
-      data: updatedTemplate, 
+      name: name || 'Custom Template',
+      description: description || 'Template from Pdf Designer',
+      data: updatedTemplate,
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:8088/api/v1/pdf_template/', {
+      const rv = await makeApi<JsonObject, JsonObject>({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload), 
-        credentials: 'include', 
-      });
+        endpoint: 'api/v1/pdf_template/',
+      })(payload);
 
-      if (!response.ok) {
-        const errorText = await response.text(); 
-        console.error('Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      if (rv?.id) {
+        alert('Template saved successfully! ID: ' + rv.id);
+        console.log('Save Response:', rv);
+        setIsModalOpen(false); 
+      } else {
+        throw new Error('Unexpected response format: No ID returned');
       }
-
-      const result = await response.json();
-      alert('Template saved successfully! ID: ' + result.id);
-      console.log('Save Response:', result);
     } catch (error) {
-      alert('Failed to save template: ' + (error as Error).message);
-      console.error('Save Error:', error);
+      const clientError = await getClientErrorObject(error);
+      alert(
+        'Failed to save template: ' +
+          (clientError.message || clientError.error || 'Unknown error'),
+      );
+      console.error('Save Error:', clientError);
     }
+  }, [name, description, designerRef]);
+
+  const onSaveTemplate = () => {
+    setIsModalOpen(true);
   };
 
   return (
-    <div id="container">
+    <div id="container" className="container">
       <div
-        style={{
-          margin: 0,
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: '8px', 
-          width: '100%',
-          overflowX: 'auto', 
-        }}
+        className={`button-container ${
+          isModalOpen ? 'pointer-events-none' : 'pointer-events-auto'
+        }`}
       >
         <Button buttonStyle="secondary" onClick={downloadPDF}>
           Download PDF
@@ -225,15 +276,21 @@ const PdfMeDesignerComponent = () => {
       <div
         id="container"
         ref={domContainerRef}
-        style={{
-          width: '100%',
-          height: 'calc(100vh - 60px)',
-          backgroundColor: 'lightgray',
-          marginTop: '5px', 
-        }}
+        className={`designer-container ${
+          isModalOpen ? 'pointer-events-none' : 'pointer-events-auto'
+        }`}
       >
-        {/* You can add other content or components as needed */}
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        name={name}
+        setName={setName}
+        description={description}
+        setDescription={setDescription}
+      />
     </div>
   );
 };

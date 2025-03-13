@@ -1,5 +1,3 @@
-// import { Suspense } from "react";
-
 import PdfmeDesignerComponent from './PdfmeDesignerComponent';
 
 // Set the worker source for PDF.js
