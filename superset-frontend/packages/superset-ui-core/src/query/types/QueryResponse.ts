@@ -94,4 +94,6 @@ export interface ChartDataResponse {
   queries: ChartDataResponseResult[];
 }
 
+
+
 export default {};
