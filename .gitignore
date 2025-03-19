@@ -83,7 +83,7 @@ test-changelog.md
 # Ignore package-lock in packages
 plugins/*/package-lock.json
 packages/*/package-lock.json
-
+*/package-lock.json
 # For country map geojson conversion script
 .ipynb_checkpoints/
 scripts/*.zip
