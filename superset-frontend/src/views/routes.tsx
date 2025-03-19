@@ -47,7 +47,11 @@ const AnnotationList = lazy(
 );
 
 const ChartList = lazy(
-  () => import(/* webpackChunkName: "ChartList" */ 'src/pages/ChartList'),
+    () => import(/* webpackChunkName: "ChartList" */ 'src/pages/ChartList'),
+);
+
+const PdfTemplateList = lazy(
+() => import(/* webpackChunkName: "ChartList" */ 'src/pages/PdfTemplateList'),
 );
 
 const CssTemplateList = lazy(
@@ -154,6 +158,11 @@ export const routes: Routes = [
   {
     path: '/chart/list/',
     Component: ChartList,
+  },
+  {
+    // Adding PDF Template list
+    path: '/pdf_template/list/',
+    Component: PdfTemplateList,
   },
   {
     path: '/tablemodelview/list/',
