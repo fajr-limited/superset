@@ -17,6 +17,7 @@
  * under the License.
  */
 const zlib = require('zlib');
+// TODO: Revert this change after completing the work - re-enable ZSTDDecompress for zstd compression support
 // const { ZSTDDecompress } = require('simple-zstd');
 
 const yargs = require('yargs');
@@ -130,6 +131,7 @@ function processHTML(proxyResponse, response) {
     uncompress = zlib.createInflate();
   // } else if (responseEncoding === 'zstd') {
   //   uncompress = ZSTDDecompress();
+  // TODO: Revert this change after completing the work - re-enable zstd compression support
   }
   if (uncompress) {
     originalResponse.pipe(uncompress);
