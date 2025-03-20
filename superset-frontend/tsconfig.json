@@ -49,12 +49,13 @@
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
 
-    /* Backwards Compatibility */
-    "suppressImplicitAnyIndexErrors": true,
+    // /* Backwards Compatibility */
+    // TODO: Revert this change after completing the work - re-enable suppressImplicitAnyIndexErrors
+    // "suppressImplicitAnyIndexErrors": true,
 
     /* Language and Environment */
     "target": "esnext",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "lib": ["dom", "dom.iterable", "esnext"],
 
     /* Projects */

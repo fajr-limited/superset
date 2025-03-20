@@ -17,7 +17,8 @@
  * under the License.
  */
 const zlib = require('zlib');
-const { ZSTDDecompress } = require('simple-zstd');
+// TODO: Revert this change after completing the work - re-enable ZSTDDecompress for zstd compression support
+// const { ZSTDDecompress } = require('simple-zstd');
 
 const yargs = require('yargs');
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -128,8 +129,9 @@ function processHTML(proxyResponse, response) {
     uncompress = zlib.createBrotliDecompress();
   } else if (responseEncoding === 'deflate') {
     uncompress = zlib.createInflate();
-  } else if (responseEncoding === 'zstd') {
-    uncompress = ZSTDDecompress();
+  // } else if (responseEncoding === 'zstd') {
+  //   uncompress = ZSTDDecompress();
+  // TODO: Revert this change after completing the work - re-enable zstd compression support
   }
   if (uncompress) {
     originalResponse.pipe(uncompress);

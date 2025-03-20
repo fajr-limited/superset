@@ -127,6 +127,10 @@ const RowLevelSecurityList = lazy(
     ),
 );
 
+const PdfDesigner = lazy(
+  () => import(/* webpackChunkName: "PdfDesigner" */ 'src/pages/PdfDesigner'),
+);
+
 type Routes = {
   path: string;
   Component: ComponentType;
@@ -233,6 +237,10 @@ export const routes: Routes = [
   {
     path: '/sqllab/',
     Component: SqlLab,
+  },
+  {
+    path: '/pdfdesigner/',
+    Component: PdfDesigner,
   },
 ];
 
