@@ -16,6 +16,8 @@ import Button from '../../components/Button';
 import ReactDOM from 'react-dom';
 import { makeApi, getClientErrorObject, JsonObject } from '@superset-ui/core'; 
 import './index.css';
+import { useParams } from 'react-router-dom';
+import { PdfTemplateClient } from 'packages/superset-ui-core/src/pdf_template';
 
 interface ModalProps {
   isOpen: boolean;
@@ -73,15 +75,45 @@ const Modal = React.memo(({ isOpen, onClose, onSave, name, setName, description,
 });
 
 const PdfMeDesignerComponent = () => {
+
+  const { id } = useParams<{ id: string }>();
   // Create a reference to store the Designer instance
   const domContainerRef = useRef<HTMLDivElement | null>(null);
   const designerRef = useRef<Designer | null>(null); 
   const basePdfInputRef = useRef<HTMLInputElement | null>(null);
   const templateInputRef = useRef<HTMLInputElement | null>(null);
 
-  const template: Template = useMemo(() => getTemplate(), []); 
+  const [template, setTemplate] = useState<Template>(getTemplate());
 
   console.log('Initial Template:', template);
+
+  useEffect(() => {
+    if (id) {
+      const client = new PdfTemplateClient();
+  
+      const fetchData = async () => {
+        try {
+          const result = await client.fetchPdfTemplateData(id); // Call your fetch function
+          const fetchedTemplate : Template = {
+            basePdf: result.data.basePdf,
+            schemas: result.data.schemas, 
+          }
+
+              // Only update if the template has changed (to prevent livelock)
+          if (JSON.stringify(fetchedTemplate) !== JSON.stringify(template)) {
+            setTemplate(fetchedTemplate);
+          }
+
+          console.log('Changed Template:', template);
+
+        } catch (err: any) {
+          throw err;
+        } 
+      };
+  
+      fetchData();
+    }
+  },[id, template]);
   
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted

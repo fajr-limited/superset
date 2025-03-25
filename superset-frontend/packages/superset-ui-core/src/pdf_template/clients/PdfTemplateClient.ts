@@ -36,8 +36,8 @@ import { PlainObject } from '../types/Base';
 type AtLeastOne<All, Each = { [K in keyof All]: Pick<All, K> }> = Partial<All> &
   Each[keyof Each];
 
-export type SliceIdAndOrFormData = AtLeastOne<{
-  sliceId: number;
+export type IdAndOrFormData = AtLeastOne<{
+  id: number;
   formData: Partial<QueryFormData>;
 }>;
 
@@ -64,15 +64,26 @@ export default class PdfTemplateClient {
     this.client = client;
   }
 
+  fetchPdfTemplateData(
+    id : string
+  ) : any {
+    return this.client.get(
+      {
+        endpoint: `/api/v1/pdf_template/${id}`,        
+      }
+    ).then(response => response.json) // Ensure JSON is returned
+    .then(data => data.result); // Extract the result
+  }
+
   loadFormData(
-    input: SliceIdAndOrFormData,
+    input: IdAndOrFormData,
     options?: Partial<RequestConfig>,
   ): Promise<QueryFormData> {
-    /* If sliceId is provided, use it to fetch stored formData from API */
-    if ('sliceId' in input) {
+    /* If id is provided, use it to fetch stored formData from API */
+    if ('id' in input) {
       const promise = this.client
         .get({
-          endpoint: `/api/v1/form_data/?slice_id=${input.sliceId}`,
+          endpoint: `/api/v1/form_data/?slice_id=${input.id}`,
           ...options,
         } as RequestConfig)
         .then(response => response.json as QueryFormData);
@@ -87,11 +98,11 @@ export default class PdfTemplateClient {
       }));
     }
 
-    /* If sliceId is not provided, returned formData wrapped in a Promise */
+    /* If id is not provided, returned formData wrapped in a Promise */
     return input.formData
       ? Promise.resolve(input.formData as QueryFormData)
       : Promise.reject(
-          new Error('At least one of sliceId or formData must be specified'),
+          new Error('At least one of id or formData must be specified'),
         );
   }
 
@@ -99,7 +110,6 @@ export default class PdfTemplateClient {
     formData: QueryFormData,
     options?: Partial<RequestConfig>,
   ): Promise<QueryData[]> {
-    const { viz_type: visType } = formData;
     const metaDataRegistry = getPdfTemplateMetadataRegistry();
     const buildQueryRegistry = getPdfTemplateBuildQueryRegistry();
 
@@ -133,17 +143,6 @@ export default class PdfTemplateClient {
     return Promise.reject(new Error(`Unknown pdf_template type: ${visType}`));
   }
 
-  loadDatasource(
-    datasourceKey: string,
-    options?: Partial<RequestConfig>,
-  ): Promise<Datasource> {
-    return this.client
-      .get({
-        endpoint: `/superset/fetch_datasource_metadata?datasourceKey=${datasourceKey}`,
-        ...options,
-      } as RequestConfig)
-      .then(response => response.json as Datasource);
-  }
 
   // eslint-disable-next-line class-methods-use-this
   loadAnnotation(
@@ -177,7 +176,7 @@ export default class PdfTemplateClient {
     return Promise.resolve({});
   }
 
-  loadPdfTemplateData(input: SliceIdAndOrFormData): Promise<PdfTemplateData> {
+  loadPdfTemplateData(input: IdAndOrFormData): Promise<PdfTemplateData> {
     return this.loadFormData(input).then(
       (
         formData: QueryFormData & {

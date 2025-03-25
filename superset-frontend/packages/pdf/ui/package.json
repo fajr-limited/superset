@@ -36,6 +36,7 @@
     "prettier": "prettier --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
+    "@babel/runtime-corejs3": "^7.26.10",
     "@dnd-kit/core": "^6.0.8",
     "@dnd-kit/sortable": "^7.0.2",
     "@scena/react-guides": "^0.16.0",
