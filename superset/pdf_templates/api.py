@@ -665,7 +665,7 @@ class PdfTemplateRestApi(BaseSupersetModelRestApi):
             return self.response_404()
 
         current_user = get_current_user()
-        url = get_url_path("Superset.slice", slice_id=pdf_template.id)
+        url = get_url_path("Superset.pdf_template", id=pdf_template.id)
         if kwargs["rison"].get("force", False):
             logger.info(
                 "Triggering thumbnail compute (pdf_template id: %s) ASYNC", str(pdf_template.id)

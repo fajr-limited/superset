@@ -248,14 +248,14 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
           Cell: ({
             row: {
               original: {
-                url,
+                id
                 name: name,
                 description,
               },
             },
           }: any) => (
             <FlexRowContainer>
-              <Link to={url} data-test={`${name}-list-pdf_template-title`}>
+              <Link to={`/pdf_template/${id}`} data-test={`${name}-list-pdf_template-title`}>
                 
                 {name}
               </Link>
@@ -569,7 +569,7 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
       subMenuButtons.push({
         name: (
           <>
-            <i className="fa fa-plus" /> {t('PdfTemplate')}
+            <i className="fa fa-plus" /> {t('PDF Template')}
           </>
         ),
         buttonStyle: 'primary',
@@ -595,7 +595,7 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
   
     return (
       <>
-        <SubMenu name={t('PdfTemplates')} buttons={subMenuButtons} />
+        <SubMenu name={t('PDF Templates')} buttons={subMenuButtons} />
         {/* {sliceCurrentlyEditing && (
           <PropertiesModal
             onHide={closePdfTemplateEditModal}

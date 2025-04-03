@@ -165,6 +165,16 @@ export const routes: Routes = [
     Component: PdfTemplateList,
   },
   {
+    // Adding PDF Template list
+    path: '/pdf_template/add',
+    Component: PdfDesigner,
+  },
+  {
+    // Adding PDF Template list
+    path: '/pdf_template/:id',
+    Component: PdfDesigner,
+  },
+  {
     path: '/tablemodelview/list/',
     Component: DatasetList,
   },
