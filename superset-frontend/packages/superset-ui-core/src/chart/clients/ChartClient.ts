@@ -106,7 +106,31 @@ export default class ChartClient {
     if (metaDataRegistry.has(visType)) {
       const { useLegacyApi } = metaDataRegistry.get(visType)!;
       const buildQuery =
-        (await buildQueryRegistry.get(visType)) ?? (() => formData);
+        (await buildQueryRegistry.get(visType)) ?? ((formData: QueryFormData) => {
+          const [datasourceId, datasourceType] = formData.datasource.split('__');
+          return {
+            datasource: {
+              id: parseInt(datasourceId, 10),
+              type: datasourceType || 'table',
+            },
+            force: false,
+            result_format: 'json',
+            result_type: 'full',
+            queries: [
+              {
+                columns: formData.columns || [],
+                metrics: formData.metrics || [],
+                filters: formData.filters || [],
+                orderby: formData.orderby || [],
+                time_range: formData.time_range || 'No filter',
+                granularity: formData.granularity || undefined,
+                extras: {
+                  time_grain_sqla: formData.time_grain_sqla || undefined,
+                },
+              },
+            ],
+          };
+        });
       const requestConfig: RequestConfig = useLegacyApi
         ? {
             endpoint: '/superset/explore_json/',
@@ -117,9 +141,7 @@ export default class ChartClient {
           }
         : {
             endpoint: '/api/v1/chart/data',
-            jsonPayload: {
-              query_context: buildQuery(formData),
-            },
+            jsonPayload: buildQuery(formData),
             ...options,
           };
 
