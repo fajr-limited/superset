@@ -83,37 +83,12 @@ const PdfMeDesignerComponent = () => {
 
   const location = useLocation();
   const [template, setTemplate] = useState<Template>(getTemplate());
-
+  const [chartSchema, setChartSchema] = useState<Schema | null>(null);
   console.log('Initial Template:', template);
 
+  // Fetch schema data from sessionStorage
   useEffect(() => {
-    if (id) {
-      const client = new PdfTemplateClient();
-
-      const fetchData = async () => {
-        try {
-          const result = await client.fetchPdfTemplateData(id);
-          const fetchedTemplate: Template = {
-            basePdf: result.data.basePdf,
-            schemas: result.data.schemas,
-          };
-
-          if (JSON.stringify(fetchedTemplate) !== JSON.stringify(template)) {
-            setTemplate(fetchedTemplate);
-          }
-
-          console.log('Loaded Template:', fetchedTemplate);
-        } catch (err: any) {
-          console.error('Error fetching template:', err);
-        }
-      };
-
-      fetchData();
-    }
-  }, [id]);
-
-  // Add table data to the loaded template
-  useEffect(() => {
+    console.log('useEffect for fetching chart schema triggered.');
     if (location.state?.sessionKey) {
       const sessionKey = location.state.sessionKey;
       const templateData = sessionStorage.getItem(sessionKey);
@@ -122,12 +97,8 @@ const PdfMeDesignerComponent = () => {
         if (!schemastr.key) {
           console.log("No table data found in session storage.");
         } else {
-          const newTemplate = { ...template };
-          const basePdf = newTemplate.basePdf as { width: number; height: number; padding: [number, number, number, number] };
-
-          const baseSchemas = newTemplate.schemas[0];
-          const lastElement = baseSchemas.length > 0 ? baseSchemas[baseSchemas.length - 1] : null;
-          const startingY = lastElement ? lastElement.position.y + lastElement.height + 10 : 10;
+          console.log('Fetched Chart Schema from sessionStorage:', schemastr);
+          const basePdf = getTemplate().basePdf as { width: number; height: number; padding: [number, number, number, number] };
           const pageWidth = basePdf.width - basePdf.padding[1] - basePdf.padding[3];
 
           const columnCount = schemastr.columns.length;
@@ -157,7 +128,7 @@ const PdfMeDesignerComponent = () => {
             "headWidthPercentages": Array.from({ length: columnCount }, () => 100 / columnCount),
             "position": {
               "x": basePdf.padding[3] + 5,
-              "y": startingY
+              "y": 10 
             },
             "width": tableWidth,
             "height": tableHeight,
@@ -217,19 +188,83 @@ const PdfMeDesignerComponent = () => {
             "readOnly": false
           };
 
-          const pageHeight = basePdf.height - basePdf.padding[0] - basePdf.padding[2];
-          if (startingY + tableHeight > pageHeight) {
-            console.warn("Table exceeds page height");
-            schema.height = pageHeight - startingY - 5;
-          }
-
-          newTemplate.schemas[0].push(schema);
-          setTemplate(newTemplate);
+          setChartSchema(schema);
         }
         sessionStorage.removeItem(sessionKey);
       }
     }
-  }, [location.state, template]);
+  }, [location.state]);
+
+  useEffect(() => {
+    console.log('useEffect for fetching template triggered. ID:', id);
+    console.log('Current URL:', window.location.pathname);
+    if (id) {
+      console.log('Fetching template with ID:', id);
+      const client = new PdfTemplateClient();
+      const fetchData = async () => {
+        try {
+          const result = await client.fetchPdfTemplateData(id);
+          console.log('Raw response from fetchPdfTemplateData:', result);
+
+          // Handle multiple possible response formats
+          const basePdf = result.result?.data?.basePdf ?? result.result?.basePdf ?? result.data?.basePdf ?? result.basePdf;
+          const schemas = result.result?.data?.schemas ?? result.result?.schemas ?? result.data?.schemas ?? result.schemas;
+
+          if (!basePdf || !schemas) {
+            console.error('Invalid template data:', JSON.stringify(result, null, 2));
+            throw new Error('Template data is missing basePdf or schemas');
+          }
+
+          const fetchedTemplate: Template = {
+            basePdf,
+            schemas,
+          };
+          console.log('Fetched Template:', fetchedTemplate);
+          console.log('Fetched Schemas:', fetchedTemplate.schemas);
+          console.log('Fetched Schemas[0]:', fetchedTemplate.schemas[0]);
+
+          // Embed the chart schema if it exists
+          if (chartSchema) {
+            console.log('Embedding Chart Schema into Template:', chartSchema);
+            const newTemplate = { ...fetchedTemplate };
+            if (!newTemplate.schemas || !Array.isArray(newTemplate.schemas)) {
+              newTemplate.schemas = [[]];
+            }
+            const baseSchemas = newTemplate.schemas[0] || [];
+            const lastElement = baseSchemas.length > 0 ? baseSchemas[baseSchemas.length - 1] : null;
+            const startingY = lastElement ? lastElement.position.y + lastElement.height + 10 : 10;
+
+            chartSchema.position.y = startingY;
+
+            const pageHeight = (newTemplate.basePdf as { height: number; padding: [number, number, number, number] }).height -
+              (newTemplate.basePdf as { padding: [number, number, number, number] }).padding[0] -
+              (newTemplate.basePdf as { padding: [number, number, number, number] }).padding[2];
+            if (startingY + chartSchema.height > pageHeight) {
+              console.warn("Table exceeds page height");
+              chartSchema.height = pageHeight - startingY - 5;
+            }
+
+            newTemplate.schemas[0] = [...baseSchemas, chartSchema];
+            console.log('Updated Template with Chart Data:', newTemplate);
+            setTemplate(newTemplate);
+          } else {
+            setTemplate(fetchedTemplate);
+          }
+        } catch (err: any) {
+          console.error('Error fetching template:', err.message);
+          setTemplate(getTemplate());
+        }
+      };
+      fetchData();
+    } else {
+      console.log('No template ID provided, skipping fetch.');
+      if (chartSchema) {
+        const newTemplate = getTemplate();
+        newTemplate.schemas = [[chartSchema]];
+        setTemplate(newTemplate);
+      }
+    }
+  }, [id, chartSchema]);
 
   useEffect(() => {
     let isMounted = true;
@@ -257,7 +292,6 @@ const PdfMeDesignerComponent = () => {
 
   const downloadPDF = async () => {
     if (!designerRef || !designerRef.current) return;
-
     // Get the updated template from the Designer UI
     const updatedTemplate = designerRef.current.getTemplate();
     console.log('Updated Template:', updatedTemplate);
@@ -337,16 +371,21 @@ const PdfMeDesignerComponent = () => {
       data: updatedTemplate,
     };
 
+    console.log('Payload being sent to backend:', JSON.stringify(payload, null, 2));
+
     try {
       const rv = await makeApi<JsonObject, JsonObject>({
         method: 'POST',
         endpoint: 'api/v1/pdf_template/',
       })(payload);
 
+      console.log('Save Response:', JSON.stringify(rv, null, 2));
+
       if (rv?.id) {
         alert('Template saved successfully! ID: ' + rv.id);
-        console.log('Save Response:', rv);
-
+        const client = new PdfTemplateClient();
+        const savedTemplate = await client.fetchPdfTemplateData(rv.id.toString());
+        console.log('Fetched saved template:', JSON.stringify(savedTemplate, null, 2));
       } else {
         throw new Error('Unexpected response format: No ID returned');
       }

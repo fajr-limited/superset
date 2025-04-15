@@ -280,7 +280,7 @@ export const useExploreAdditionalActionsMenu = (
 
   const handleAddTableToPdfDesigner = useCallback(() => {
     console.log('handleAddTableToPdfDesigner called');
-    setIsModalOpen(true); // Open the modal to select a template
+    setIsModalOpen(true);
     console.log('isModalOpen set to true');
   }, []);
 
@@ -329,7 +329,7 @@ export const useExploreAdditionalActionsMenu = (
             sessionStorage.setItem(sessionKey, JSON.stringify(tableTemplate));
 
             history.push({
-              pathname: `/pdfdesigner/${selectedTemplate}`, // Navigate to PDF Designer with the selected template ID
+              pathname: `/pdf_template/${selectedTemplate}`,
               state: { sessionKey }
             });
 
@@ -399,10 +399,10 @@ export const useExploreAdditionalActionsMenu = (
           );
           break;
         case MENU_KEYS.DOWNLOAD_AS_IMAGE:
+          const chartName = slice ? (slice.slice_name || t('New chart')) : t('New chart');
           downloadAsImage(
             '.panel-body .chart-container',
-            // eslint-disable-next-line camelcase
-            slice?.slice_name ?? t('New chart'),
+            chartName,
             true,
           )(domEvent);
           setIsDropdownVisible(false);
