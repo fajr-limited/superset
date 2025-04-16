@@ -203,7 +203,6 @@ export const useExploreAdditionalActionsMenu = (
 
   // Debug state changes
   useEffect(() => {
-    console.log('isModalOpen changed to:', isModalOpen);
   }, [isModalOpen]);
 
   const shareByEmail = useCallback(async () => {
@@ -279,9 +278,7 @@ export const useExploreAdditionalActionsMenu = (
   }, [addDangerToast, addSuccessToast, latestQueryFormData]);
 
   const handleAddTableToPdfDesigner = useCallback(() => {
-    console.log('handleAddTableToPdfDesigner called');
     setIsModalOpen(true);
-    console.log('isModalOpen set to true');
   }, []);
 
   const handleConfirmTemplateSelection = useCallback(() => {
@@ -293,14 +290,10 @@ export const useExploreAdditionalActionsMenu = (
     if (slice?.slice_id) {
       const chartClient = new ChartClient();
 
-      console.log("Sending chart identifier:", slice);
-
       chartClient.loadFormData({ sliceId: slice.slice_id }).then((formData) => {
-        console.log("Form data:", formData);
         chartClient
           .loadQueryData(formData)
           .then(response => {
-            console.log("Response received:", response);
             const tableData = response[0].result?.[0]?.data || [];
             if (tableData.length === 0) {
               console.error("No table data available.");
@@ -352,7 +345,6 @@ export const useExploreAdditionalActionsMenu = (
 
   const handleMenuClick = useCallback(
     ({ key, domEvent }) => {
-      console.log('Menu item clicked with key:', key);
       switch (key) {
         case MENU_KEYS.EDIT_PROPERTIES:
           onOpenPropertiesModal();

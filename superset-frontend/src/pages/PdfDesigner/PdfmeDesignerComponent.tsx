@@ -84,20 +84,17 @@ const PdfMeDesignerComponent = () => {
   const location = useLocation();
   const [template, setTemplate] = useState<Template>(getTemplate());
   const [chartSchema, setChartSchema] = useState<Schema | null>(null);
-  console.log('Initial Template:', template);
 
   // Fetch schema data from sessionStorage
   useEffect(() => {
-    console.log('useEffect for fetching chart schema triggered.');
     if (location.state?.sessionKey) {
       const sessionKey = location.state.sessionKey;
       const templateData = sessionStorage.getItem(sessionKey);
       if (templateData) {
         const schemastr = JSON.parse(templateData);
         if (!schemastr.key) {
-          console.log("No table data found in session storage.");
+           // No table data found in session storage.
         } else {
-          console.log('Fetched Chart Schema from sessionStorage:', schemastr);
           const basePdf = getTemplate().basePdf as { width: number; height: number; padding: [number, number, number, number] };
           const pageWidth = basePdf.width - basePdf.padding[1] - basePdf.padding[3];
 
@@ -196,15 +193,11 @@ const PdfMeDesignerComponent = () => {
   }, [location.state]);
 
   useEffect(() => {
-    console.log('useEffect for fetching template triggered. ID:', id);
-    console.log('Current URL:', window.location.pathname);
     if (id) {
-      console.log('Fetching template with ID:', id);
       const client = new PdfTemplateClient();
       const fetchData = async () => {
         try {
           const result = await client.fetchPdfTemplateData(id);
-          console.log('Raw response from fetchPdfTemplateData:', result);
 
           // Handle multiple possible response formats
           const basePdf = result.result?.data?.basePdf ?? result.result?.basePdf ?? result.data?.basePdf ?? result.basePdf;
@@ -219,13 +212,9 @@ const PdfMeDesignerComponent = () => {
             basePdf,
             schemas,
           };
-          console.log('Fetched Template:', fetchedTemplate);
-          console.log('Fetched Schemas:', fetchedTemplate.schemas);
-          console.log('Fetched Schemas[0]:', fetchedTemplate.schemas[0]);
 
           // Embed the chart schema if it exists
           if (chartSchema) {
-            console.log('Embedding Chart Schema into Template:', chartSchema);
             const newTemplate = { ...fetchedTemplate };
             if (!newTemplate.schemas || !Array.isArray(newTemplate.schemas)) {
               newTemplate.schemas = [[]];
@@ -245,7 +234,6 @@ const PdfMeDesignerComponent = () => {
             }
 
             newTemplate.schemas[0] = [...baseSchemas, chartSchema];
-            console.log('Updated Template with Chart Data:', newTemplate);
             setTemplate(newTemplate);
           } else {
             setTemplate(fetchedTemplate);
@@ -257,7 +245,6 @@ const PdfMeDesignerComponent = () => {
       };
       fetchData();
     } else {
-      console.log('No template ID provided, skipping fetch.');
       if (chartSchema) {
         const newTemplate = getTemplate();
         newTemplate.schemas = [[chartSchema]];
@@ -268,7 +255,6 @@ const PdfMeDesignerComponent = () => {
 
   useEffect(() => {
     let isMounted = true;
-    console.log('Template in useEffect:', template);
 
     if (domContainerRef.current) {
       designerRef.current = new Designer({
@@ -281,7 +267,6 @@ const PdfMeDesignerComponent = () => {
     }
 
     return () => {
-      console.log("Cleaning up Designer instance.");
       if (designerRef.current) {
         designerRef.current.destroy?.();
         designerRef.current = null;
@@ -294,7 +279,6 @@ const PdfMeDesignerComponent = () => {
     if (!designerRef || !designerRef.current) return;
     // Get the updated template from the Designer UI
     const updatedTemplate = designerRef.current.getTemplate();
-    console.log('Updated Template:', updatedTemplate);
 
     const plugins = getTemplatePlugins();
     const inputs = getInputFromTemplate(updatedTemplate);
@@ -362,8 +346,6 @@ const PdfMeDesignerComponent = () => {
     }
 
     const updatedTemplate = designerRef.current.getTemplate();
-    console.log('Saving Template:', updatedTemplate);
-    console.log('Schemas before saving:', updatedTemplate.schemas);
 
     const payload = {
       name: name || 'Custom Template',
@@ -371,21 +353,16 @@ const PdfMeDesignerComponent = () => {
       data: updatedTemplate,
     };
 
-    console.log('Payload being sent to backend:', JSON.stringify(payload, null, 2));
-
     try {
       const rv = await makeApi<JsonObject, JsonObject>({
         method: 'POST',
         endpoint: 'api/v1/pdf_template/',
       })(payload);
 
-      console.log('Save Response:', JSON.stringify(rv, null, 2));
 
       if (rv?.id) {
         alert('Template saved successfully! ID: ' + rv.id);
         const client = new PdfTemplateClient();
-        const savedTemplate = await client.fetchPdfTemplateData(rv.id.toString());
-        console.log('Fetched saved template:', JSON.stringify(savedTemplate, null, 2));
       } else {
         throw new Error('Unexpected response format: No ID returned');
       }
