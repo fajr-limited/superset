@@ -170,6 +170,9 @@ class PdfTemplatePutSchema(Schema):
     is_managed_externally = fields.Boolean(allow_none=True, dump_default=False)
     external_url = fields.String(allow_none=True)
     tags = fields.List(fields.Integer(metadata={"description": tags_description}))
+    data = fields.Dict(
+        metadata={"description": data_description}
+    )
 
 
 class PdfTemplateGetDatasourceObjectDataResponseSchema(Schema):
