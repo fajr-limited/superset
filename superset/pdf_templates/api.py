@@ -143,20 +143,15 @@ class PdfTemplateRestApi(BaseSupersetModelRestApi):
         "changed_by.last_name",
         "changed_by.id",
         "changed_by_name",
-        # "changed_on_delta_humanized",
+        "changed_on_delta_humanized",
         "changed_on_dttm",
         "changed_on_utc",
         "created_by.first_name",
         "created_by.id",
         "created_by.last_name",
         "created_by_name",
-        # "created_on_delta_humanized",
         "description",
         "id",
-        # "last_saved_at",
-        # "last_saved_by.id",
-        # "last_saved_by.first_name",
-        # "last_saved_by.last_name",
         "owners.first_name",
         "owners.id",
         "owners.last_name",
@@ -169,11 +164,7 @@ class PdfTemplateRestApi(BaseSupersetModelRestApi):
     list_select_columns = list_columns + ["changed_by_fk", "changed_on"]
     order_columns = [
         "changed_by.first_name",
-        # "changed_on_delta_humanized"
-        # "last_saved_at",
-        # "last_saved_by.id",
-        # "last_saved_by.first_name",
-        # "last_saved_by.last_name",
+        "changed_on_delta_humanized",
         "name",
     ]
     search_columns = [
