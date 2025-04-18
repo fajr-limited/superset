@@ -24,7 +24,7 @@ from sqlalchemy.orm.query import Query
 from superset import db, security_manager
 from superset.connectors.sqla import models
 from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import FavStar
+from superset.models.core import FavStar, FavStarClassName
 from superset.models.pdf_template import PdfTemplate
 from superset.tags.filters import BaseTagIdFilter, BaseTagNameFilter
 from superset.utils.core import get_user_id
@@ -56,7 +56,7 @@ class PdfTemplateFavoriteFilter(BaseFavoriteFilter):  # pylint: disable=too-few-
     """
 
     arg_name = "pdf_template_is_favorite"
-    class_name = "pdf_template"
+    class_name = FavStarClassName.PDF_TEMPLATE
     model = PdfTemplate
 
 
@@ -166,7 +166,7 @@ class PdfTemplateOwnedCreatedFavoredByMeFilter(BaseFilter):  # pylint: disable=t
             FavStar,
             and_(
                 FavStar.user_id == get_user_id(),
-                FavStar.class_name == "pdf_template",
+                FavStar.class_name == FavStarClassName.PDF_TEMPLATE,
                 PdfTemplate.id == FavStar.obj_id,
             ),
             isouter=True,
