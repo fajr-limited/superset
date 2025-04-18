@@ -123,7 +123,7 @@ export default function PdfTemplateCard({
             data-test="PdfTemplate-list-edit-option"
             role="button"
             tabIndex={0}
-            // onClick={() => openPdfTemplateEditModal(PdfTemplate)}
+            onClick={() => history.push(`/pdf_template/${PdfTemplate.id}`)}
           >
             <Icons.EditAlt iconSize="l" /> {t('Edit')}
           </div>
