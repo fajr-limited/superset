@@ -55,7 +55,6 @@ import Loading from 'src/components/Loading';
 import { dangerouslyGetItemDoNotUse } from 'src/utils/localStorageHelpers';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import PropertiesModal from 'src/explore/components/PropertiesModal';
-import ImportModelsModal from 'src/components/ImportModal/index';
 import PdfTemplate from 'src/types/PdfTemplate';
 import Tag from 'src/types/TagType';
 import { Tooltip } from 'src/components/Tooltip';
@@ -72,6 +71,7 @@ import { DashboardCrossLinks } from 'src/components/ListView/DashboardCrossLinks
 import { ModifiedInfo } from 'src/components/AuditInfo';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
 import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
+
   
   const FlexRowContainer = styled.div`
     align-items: center;
@@ -90,19 +90,6 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
   `;
   
   const PAGE_SIZE = 25;
-  const PASSWORDS_NEEDED_MESSAGE = t(
-    'The passwords for the databases below are needed in order to ' +
-      'import them together with the pdf_templates. Please note that the ' +
-      '"Secure Extra" and "Certificate" sections of ' +
-      'the database configuration are not present in export files, and ' +
-      'should be added manually after the import if they are needed.',
-  );
-  const CONFIRM_OVERWRITE_MESSAGE = t(
-    'You are importing one or more pdf_templates that already exist. ' +
-      'Overwriting might cause you to lose some of your work. Are you ' +
-      'sure you want to overwrite?',
-  );  
- 
   
   interface PdfTemplateListProps {
     addDangerToast: (msg: string) => void;
@@ -159,37 +146,9 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
     //   closePdfTemplateEditModal,
     // } = usePdfTemplateEditModal(setPdfTemplates, pdf_templates);
   
-    const [importingPdfTemplate, showImportModal] = useState<boolean>(false);
-    const [passwordFields, setPasswordFields] = useState<string[]>([]);
-    const [preparingExport, setPreparingExport] = useState<boolean>(false);
-    const [sshTunnelPasswordFields, setSSHTunnelPasswordFields] = useState<
-      string[]
-    >([]);
-    const [sshTunnelPrivateKeyFields, setSSHTunnelPrivateKeyFields] = useState<
-      string[]
-    >([]);
-    const [
-      sshTunnelPrivateKeyPasswordFields,
-      setSSHTunnelPrivateKeyPasswordFields,
-    ] = useState<string[]>([]);
-  
     // TODO: Fix usage of localStorage keying on the user id
     const userSettings = dangerouslyGetItemDoNotUse(userId?.toString(), null) as {
       thumbnails: boolean;
-    };
-  
-    const openPdfTemplateImportModal = () => {
-      showImportModal(true);
-    };
-  
-    const closePdfTemplateImportModal = () => {
-      showImportModal(false);
-    };
-  
-    const handlePdfTemplateImport = () => {
-      showImportModal(false);
-      refreshData();
-      addSuccessToast(t('PdfTemplate imported'));
     };
   
     const canCreate = hasPerm('can_write');
@@ -198,11 +157,33 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
     const canExport = hasPerm('can_export');
     const initialSort = [{ id: 'changed_on_delta_humanized', desc: true }];
     const handleBulkPdfTemplateExport = (pdf_templatesToExport: PdfTemplate[]) => {
-      const ids = pdf_templatesToExport.map(({ id }) => id);
-      handleResourceExport('pdf_template', ids, () => {
-        setPreparingExport(false);
+      // If only one template, download it directly as JSON
+      if (pdf_templatesToExport.length === 1) {
+        const template = pdf_templatesToExport[0];
+        const blob = new Blob([JSON.stringify(template.data)], {
+          type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${template.name}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      // For multiple templates, download each one separately
+      pdf_templatesToExport.forEach(template => {
+        const blob = new Blob([JSON.stringify(template.data)], {
+          type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${template.name}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
       });
-      setPreparingExport(true);
     };
   
     function handleBulkPdfTemplateDelete(pdf_templatesToDelete: PdfTemplate[]) {
@@ -248,8 +229,8 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
           Cell: ({
             row: {
               original: {
-                id
-                name: name,
+                id,
+                name,
                 description,
               },
             },
@@ -577,20 +558,6 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
           history.push('/pdf_template/add');
         },
       });
-  
-      subMenuButtons.push({
-        name: (
-          <Tooltip
-            id="import-tooltip"
-            title={t('Import pdf_templates')}
-            placement="bottomRight"
-          >
-            <Icons.Import data-test="import-button" />
-          </Tooltip>
-        ),
-        buttonStyle: 'link',
-        onClick: openPdfTemplateImportModal,
-      });
     }
   
     return (
@@ -609,82 +576,55 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
           description={t('Are you sure you want to delete the selected pdf_templates?')}
           onConfirm={handleBulkPdfTemplateDelete}
         >
-          {confirmDelete => {
-            const bulkActions: ListViewProps['bulkActions'] = [];
-            if (canDelete) {
-              bulkActions.push({
-                key: 'delete',
-                name: t('Delete'),
-                type: 'danger',
-                onSelect: confirmDelete,
-              });
-            }
-            if (canExport) {
-              bulkActions.push({
-                key: 'export',
-                name: t('Export'),
-                type: 'primary',
-                onSelect: handleBulkPdfTemplateExport,
-              });
-            }
+          {(confirmDelete: (event: MouseEvent) => void) => {
+            const handleBulkDelete = (templatesToDelete: PdfTemplate[]) =>
+              SupersetClient.delete({
+                endpoint: `/api/v1/pdf_template/?q=${rison.encode(
+                  templatesToDelete.map(({ id }) => id),
+                )}`,
+              }).then(
+                ({ json = {} }) => {
+                  refreshData();
+                  addSuccessToast(json.message);
+                },
+                createErrorHandler(errMsg =>
+                  addDangerToast(
+                    t('There was an issue deleting the selected pdf_templates: %s', errMsg),
+                  ),
+                ),
+              );
+
             return (
               <ListView<PdfTemplate>
-                bulkActions={bulkActions}
-                bulkSelectEnabled={bulkSelectEnabled}
-                cardSortSelectOptions={sortTypes}
                 className="pdf_template-list-view"
                 columns={columns}
                 count={pdf_templateCount}
                 data={pdf_templates}
-                disableBulkSelect={toggleBulkSelect}
-                refreshData={refreshData}
                 fetchData={fetchData}
                 filters={filters}
                 initialSort={initialSort}
                 loading={loading}
                 pageSize={PAGE_SIZE}
                 renderCard={renderCard}
-                enableBulkTag
-                bulkTagResourceName="pdf_template"
-                addSuccessToast={addSuccessToast}
-                addDangerToast={addDangerToast}
-                showThumbnails={
-                  userSettings
-                    ? userSettings.thumbnails
-                    : isFeatureEnabled(FeatureFlag.Thumbnails)
-                }
                 defaultViewMode={
                   isFeatureEnabled(FeatureFlag.ListviewsDefaultCardView)
                     ? 'card'
                     : 'table'
                 }
+                bulkActions={
+                  canDelete || canExport
+                    ? {
+                        onBulkDelete: handleBulkDelete,
+                        onBulkExport: handleBulkPdfTemplateExport,
+                      }
+                    : undefined
+                }
+                bulkSelectEnabled={bulkSelectEnabled}
+                disableBulkSelect={toggleBulkSelect}
               />
             );
           }}
         </ConfirmStatusChange>
-  
-        <ImportModelsModal
-          resourceName="pdf_template"
-          resourceLabel={t('pdf_template')}
-          passwordsNeededMessage={PASSWORDS_NEEDED_MESSAGE}
-          confirmOverwriteMessage={CONFIRM_OVERWRITE_MESSAGE}
-          addDangerToast={addDangerToast}
-          addSuccessToast={addSuccessToast}
-          onModelImport={handlePdfTemplateImport}
-          show={importingPdfTemplate}
-          onHide={closePdfTemplateImportModal}
-          passwordFields={passwordFields}
-          setPasswordFields={setPasswordFields}
-          sshTunnelPasswordFields={sshTunnelPasswordFields}
-          setSSHTunnelPasswordFields={setSSHTunnelPasswordFields}
-          sshTunnelPrivateKeyFields={sshTunnelPrivateKeyFields}
-          setSSHTunnelPrivateKeyFields={setSSHTunnelPrivateKeyFields}
-          sshTunnelPrivateKeyPasswordFields={sshTunnelPrivateKeyPasswordFields}
-          setSSHTunnelPrivateKeyPasswordFields={
-            setSSHTunnelPrivateKeyPasswordFields
-          }
-        />
-        {preparingExport && <Loading />}
       </>
     );
   }
