@@ -306,6 +306,60 @@ export const useExploreAdditionalActionsMenu = (
     setIsDropdownVisible(false);
   }, [slice?.slice_id, history, addDangerToast, selectedTemplate]);
 
+  const handleSendToNew = useCallback(() => {
+    if (slice?.slice_id) {
+      const chartClient = new ChartClient();
+
+      chartClient.loadFormData({ sliceId: slice.slice_id }).then((formData) => {
+        chartClient
+          .loadQueryData(formData)
+          .then(response => {
+            const tableData = response[0].result?.[0]?.data || [];
+            if (tableData.length === 0) {
+              console.error("No table data available.");
+              addDangerToast(t('No table data available for this chart.'));
+              return;
+            }
+
+            const headers = response[0].result?.[0]?.colnames || [];
+            if (headers.length === 0) {
+              console.error("No column names available.");
+              addDangerToast(t('No column names available for this chart.'));
+              return;
+            }
+
+            const rows = tableData.map((row) => Object.values(row));
+            const rowsstr = rows.map(row => row.map(element => String(element)));
+
+            const tableTemplate = {
+              key: "table",
+              type: "table",
+              columns: headers,
+              data: JSON.stringify(rowsstr),
+            };
+
+            const sessionKey = 'pdf_designer_template';
+            sessionStorage.setItem(sessionKey, JSON.stringify(tableTemplate));
+
+            history.push({
+              pathname: '/pdf_template/add',
+              state: { sessionKey }
+            });
+
+            setIsModalOpen(false);
+            setSelectedTemplate(null);
+          })
+          .catch((error) => {
+            console.error("Error fetching table data:", error);
+            addDangerToast(t('Failed to fetch chart data. Please try again later.'));
+          });
+      }).catch((error) => {
+        console.error("Error fetching form data:", error);
+        addDangerToast(t('Failed to fetch chart form data. Please try again later.'));
+      });
+    }
+  }, [slice, history, addDangerToast]);
+
   const handleMenuClick = useCallback(
     ({ key, domEvent }) => {
       switch (key) {
@@ -559,6 +613,7 @@ export const useExploreAdditionalActionsMenu = (
             setSelectedTemplate(null);
           }}
           onConfirm={handleConfirmTemplateSelection}
+          onSendToNew={handleSendToNew}
           templates={templates}
           selectedTemplate={selectedTemplate}
           setSelectedTemplate={setSelectedTemplate}
