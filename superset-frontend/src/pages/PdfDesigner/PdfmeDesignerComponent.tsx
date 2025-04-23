@@ -390,7 +390,12 @@ const PdfMeDesignerComponent = () => {
         <Button buttonStyle="secondary" onClick={downloadPDF}>
           Download PDF
         </Button>
-        <Button buttonStyle="secondary" onClick={onDownloadTemplate}>
+        <Button 
+          buttonStyle="secondary" 
+          onClick={onDownloadTemplate}
+          disabled={!!chartSchema}
+          title={chartSchema ? "Download Template is disabled when viewing chart data" : ""}
+        >
           Download Template
         </Button>
         <input
@@ -419,7 +424,12 @@ const PdfMeDesignerComponent = () => {
         >
           Change Base PDF
         </Button>
-        <Button buttonStyle="secondary" onClick={onSaveTemplate}>
+        <Button 
+          buttonStyle="secondary" 
+          onClick={onSaveTemplate}
+          disabled={!!chartSchema}
+          title={chartSchema ? "Save is disabled when viewing chart data" : ""}
+        >
           Save
         </Button>
         <Button buttonStyle="secondary" onClick={onResetTemplate}>
