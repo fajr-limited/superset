@@ -354,10 +354,20 @@ const PdfMeDesignerComponent = () => {
     };
 
     try {
-      const rv = await makeApi<JsonObject, JsonObject>({
-        method: 'POST',
-        endpoint: 'api/v1/pdf_template/',
-      })(payload);
+      let rv;
+      if (id) {
+        // Update existing template
+        rv = await makeApi<JsonObject, JsonObject>({
+          method: 'PUT',
+          endpoint: `api/v1/pdf_template/${id}`,
+        })(payload);
+      } else {
+        // Create new template
+        rv = await makeApi<JsonObject, JsonObject>({
+          method: 'POST',
+          endpoint: 'api/v1/pdf_template/',
+        })(payload);
+      }
 
 
       if (rv?.id) {
@@ -374,7 +384,7 @@ const PdfMeDesignerComponent = () => {
       );
       console.error('Save Error:', clientError);
     }
-  }, [name, description, designerRef]);
+  }, [name, description, designerRef, id]);
 
   const onSaveTemplate = () => {
     setIsModalOpen(true);
