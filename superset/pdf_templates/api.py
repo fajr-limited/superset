@@ -1075,3 +1075,49 @@ class PdfTemplateRestApi(BaseSupersetModelRestApi):
         # )
         # command.run()
         return self.response(200, message="OK")
+
+    @expose("/download/<int:pk>", methods=("GET",))
+    @protect()
+    @safe
+    @statsd_metrics
+    @event_logger.log_this_with_context(
+        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.download",
+        log_to_statsd=False,
+    )
+    def download(self, pk: int) -> Response:
+        """Download a single pdf_template as JSON.
+        ---
+        get:
+          summary: Download a single pdf_template as JSON
+          parameters:
+          - in: path
+            name: pk
+            schema:
+              type: integer
+          responses:
+            200:
+              description: A JSON file containing the template data
+              content:
+                application/json:
+                  schema:
+                    type: string
+                    format: binary
+            404:
+              $ref: '#/components/responses/404'
+            500:
+              $ref: '#/components/responses/500'
+        """
+        try:
+            template = self.datamodel.get(pk)
+            if not template:
+                return self.response_404()
+            
+            response = send_file(
+                BytesIO(json.dumps(template.data).encode()),
+                mimetype="application/json",
+                as_attachment=True,
+                download_name=f"{template.name}.json",
+            )
+            return response
+        except Exception as ex:
+            return self.response_500(message=str(ex))

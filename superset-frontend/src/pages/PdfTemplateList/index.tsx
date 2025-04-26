@@ -71,7 +71,7 @@ import { DashboardCrossLinks } from 'src/components/ListView/DashboardCrossLinks
 import { ModifiedInfo } from 'src/components/AuditInfo';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
 import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
-
+import JSZip from 'jszip';
   
   const FlexRowContainer = styled.div`
     align-items: center;
