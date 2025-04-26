@@ -43,7 +43,7 @@ class PdfTemplateDAO(BaseDAO[PdfTemplate]):
             star.obj_id
             for star in db.session.query(FavStar.obj_id)
             .filter(
-                FavStar.class_name == FavStarClassName.CHART,
+                FavStar.class_name == FavStarClassName.PDF_TEMPLATE,
                 FavStar.obj_id.in_(ids),
                 FavStar.user_id == get_user_id(),
             )
