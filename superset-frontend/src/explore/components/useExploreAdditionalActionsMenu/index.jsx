@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   css,
@@ -48,6 +48,10 @@ import {
 import ViewQueryModal from '../controls/ViewQueryModal';
 import EmbedCodeContent from '../EmbedCodeContent';
 import DashboardsSubMenu from './DashboardsSubMenu';
+import PdfTemplateModal from './PdfTemplateModal.jsx';
+import { ChartClient } from '@superset-ui/core';
+import { useHistory } from 'react-router-dom';
+import { makeApi, getClientErrorObject } from '@superset-ui/core';
 
 const MENU_KEYS = {
   EDIT_PROPERTIES: 'edit_properties',
@@ -69,6 +73,7 @@ const MENU_KEYS = {
   DELETE_REPORT: 'delete_report',
   VIEW_QUERY: 'view_query',
   RUN_IN_SQL_LAB: 'run_in_sql_lab',
+  ADD_TABLE_TO_PDF_DESIGNER: 'add_table_to_pdf_designer',
 };
 
 const VIZ_TYPES_PIVOTABLE = [VizType.PivotTable];
@@ -130,11 +135,38 @@ export const useExploreAdditionalActionsMenu = (
   const dispatch = useDispatch();
   const [showReportSubMenu, setShowReportSubMenu] = useState(null);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const chart = useSelector(
     state => state.charts?.[getChartKey(state.explore)],
   );
 
   const { datasource } = latestQueryFormData;
+  const history = useHistory();
+
+  // Fetch PDF templates from the backend
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await makeApi({
+          method: 'GET',
+          endpoint: '/api/v1/pdf_template/',
+        })();
+        setTemplates(response.result || []);
+      } catch (error) {
+        const clientError = await getClientErrorObject(error);
+        addDangerToast(
+          t('Failed to fetch PDF templates: %s', clientError.message || clientError.error || 'Unknown error')
+        );
+      }
+    };
+    fetchTemplates();
+  }, [addDangerToast]);
+
+  // Debug state changes
+  useEffect(() => {
+  }, [isModalOpen]);
 
   const shareByEmail = useCallback(async () => {
     try {
@@ -208,6 +240,126 @@ export const useExploreAdditionalActionsMenu = (
     }
   }, [addDangerToast, addSuccessToast, latestQueryFormData]);
 
+  const handleAddTableToPdfDesigner = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
+
+  const handleConfirmTemplateSelection = useCallback(() => {
+    if (!selectedTemplate) {
+      addDangerToast(t('Please select a template.'));
+      return;
+    }
+
+    if (slice?.slice_id) {
+      const chartClient = new ChartClient();
+
+      chartClient.loadFormData({ sliceId: slice.slice_id }).then((formData) => {
+        chartClient
+          .loadQueryData(formData)
+          .then(response => {
+            const tableData = response[0].result?.[0]?.data || [];
+            if (tableData.length === 0) {
+              console.error("No table data available.");
+              addDangerToast(t('No table data available for this chart.'));
+              return;
+            }
+
+            const headers = response[0].result?.[0]?.colnames || [];
+            if (headers.length === 0) {
+              console.error("No column names available.");
+              addDangerToast(t('No column names available for this chart.'));
+              return;
+            }
+
+            const rows = tableData.map((row) => Object.values(row));
+            const rowsstr = rows.map(row => row.map(element => String(element)));
+
+            const tableTemplate = {
+              key: "table",
+              type: "table",
+              columns: headers,
+              data: JSON.stringify(rowsstr),
+            };
+
+            const sessionKey = 'pdf_designer_template';
+            sessionStorage.setItem(sessionKey, JSON.stringify(tableTemplate));
+
+            history.push({
+              pathname: `/pdf_template/${selectedTemplate}`,
+              state: { sessionKey }
+            });
+
+            setIsModalOpen(false);
+            setSelectedTemplate(null);
+          })
+          .catch((error) => {
+            console.error("Error fetching table data:", error);
+            addDangerToast(t('Failed to fetch chart data. Please try again later.'));
+          });
+      }).catch((error) => {
+        console.error("Error fetching form data:", error);
+        addDangerToast(t('Failed to fetch chart form data. Please try again later.'));
+      });
+    } else {
+      addDangerToast(t('Chart ID is missing. Cannot add table to PDF Designer.'));
+    }
+    setIsDropdownVisible(false);
+  }, [slice?.slice_id, history, addDangerToast, selectedTemplate]);
+
+  const handleSendToNew = useCallback(() => {
+    if (slice?.slice_id) {
+      const chartClient = new ChartClient();
+
+      chartClient.loadFormData({ sliceId: slice.slice_id }).then((formData) => {
+        chartClient
+          .loadQueryData(formData)
+          .then(response => {
+            const tableData = response[0].result?.[0]?.data || [];
+            if (tableData.length === 0) {
+              console.error("No table data available.");
+              addDangerToast(t('No table data available for this chart.'));
+              return;
+            }
+
+            const headers = response[0].result?.[0]?.colnames || [];
+            if (headers.length === 0) {
+              console.error("No column names available.");
+              addDangerToast(t('No column names available for this chart.'));
+              return;
+            }
+
+            const rows = tableData.map((row) => Object.values(row));
+            const rowsstr = rows.map(row => row.map(element => String(element)));
+
+            const tableTemplate = {
+              key: "table",
+              type: "table",
+              columns: headers,
+              data: JSON.stringify(rowsstr),
+            };
+
+            const sessionKey = 'pdf_designer_template';
+            sessionStorage.setItem(sessionKey, JSON.stringify(tableTemplate));
+
+            history.push({
+              pathname: '/pdf_template/add',
+              state: { sessionKey }
+            });
+
+            setIsModalOpen(false);
+            setSelectedTemplate(null);
+          })
+          .catch((error) => {
+            console.error("Error fetching table data:", error);
+            addDangerToast(t('Failed to fetch chart data. Please try again later.'));
+          });
+      }).catch((error) => {
+        console.error("Error fetching form data:", error);
+        addDangerToast(t('Failed to fetch chart form data. Please try again later.'));
+      });
+    }
+  }, [slice, history, addDangerToast]);
+
   const handleMenuClick = useCallback(
     ({ key, domEvent }) => {
       switch (key) {
@@ -256,10 +408,10 @@ export const useExploreAdditionalActionsMenu = (
           );
           break;
         case MENU_KEYS.DOWNLOAD_AS_IMAGE:
+          const chartName = slice ? (slice.slice_name || t('New chart')) : t('New chart');
           downloadAsImage(
             '.panel-body .chart-container',
-            // eslint-disable-next-line camelcase
-            slice?.slice_name ?? t('New chart'),
+            chartName,
             true,
           )(domEvent);
           setIsDropdownVisible(false);
@@ -288,6 +440,9 @@ export const useExploreAdditionalActionsMenu = (
           onOpenInEditor(latestQueryFormData, domEvent.metaKey);
           setIsDropdownVisible(false);
           break;
+        case MENU_KEYS.ADD_TABLE_TO_PDF_DESIGNER:
+          handleAddTableToPdfDesigner();
+          break;
         default:
           break;
       }
@@ -302,150 +457,168 @@ export const useExploreAdditionalActionsMenu = (
       onOpenPropertiesModal,
       shareByEmail,
       slice?.slice_name,
+      handleAddTableToPdfDesigner,
     ],
   );
 
   const menu = useMemo(
     () => (
-      <Menu onClick={handleMenuClick} selectable={false} {...rest}>
-        <>
-          {slice && (
-            <Menu.Item key={MENU_KEYS.EDIT_PROPERTIES}>
-              {t('Edit chart properties')}
-            </Menu.Item>
-          )}
-          <Menu.SubMenu
-            title={t('On dashboards')}
-            key={MENU_KEYS.DASHBOARDS_ADDED_TO}
-          >
-            <DashboardsSubMenu
-              chartId={slice?.slice_id}
-              dashboards={dashboards}
-            />
-          </Menu.SubMenu>
-          <Menu.Divider />
-        </>
-        <Menu.SubMenu title={t('Download')} key={MENU_KEYS.DOWNLOAD_SUBMENU}>
-          {VIZ_TYPES_PIVOTABLE.includes(latestQueryFormData.viz_type) ? (
-            <>
+      <div>
+        <Menu onClick={handleMenuClick} selectable={false} {...rest}>
+          <>
+            {slice && (
+              <Menu.Item key={MENU_KEYS.EDIT_PROPERTIES}>
+                {t('Edit chart properties')}
+              </Menu.Item>
+            )}
+            <Menu.SubMenu
+              title={t('On dashboards')}
+              key={MENU_KEYS.DASHBOARDS_ADDED_TO}
+            >
+              <DashboardsSubMenu
+                chartId={slice?.slice_id}
+                dashboards={dashboards}
+              />
+            </Menu.SubMenu>
+            <Menu.Divider />
+          </>
+          <Menu.SubMenu title={t('Download')} key={MENU_KEYS.DOWNLOAD_SUBMENU}>
+            {VIZ_TYPES_PIVOTABLE.includes(latestQueryFormData.viz_type) ? (
+              <>
+                <Menu.Item
+                  key={MENU_KEYS.EXPORT_TO_CSV}
+                  icon={<Icons.FileOutlined css={iconReset} />}
+                  disabled={!canDownloadCSV}
+                >
+                  {t('Export to original .CSV')}
+                </Menu.Item>
+                <Menu.Item
+                  key={MENU_KEYS.EXPORT_TO_CSV_PIVOTED}
+                  icon={<Icons.FileOutlined css={iconReset} />}
+                  disabled={!canDownloadCSV}
+                >
+                  {t('Export to pivoted .CSV')}
+                </Menu.Item>
+              </>
+            ) : (
               <Menu.Item
                 key={MENU_KEYS.EXPORT_TO_CSV}
                 icon={<Icons.FileOutlined css={iconReset} />}
                 disabled={!canDownloadCSV}
               >
-                {t('Export to original .CSV')}
+                {t('Export to .CSV')}
               </Menu.Item>
-              <Menu.Item
-                key={MENU_KEYS.EXPORT_TO_CSV_PIVOTED}
-                icon={<Icons.FileOutlined css={iconReset} />}
-                disabled={!canDownloadCSV}
-              >
-                {t('Export to pivoted .CSV')}
-              </Menu.Item>
-            </>
-          ) : (
+            )}
             <Menu.Item
-              key={MENU_KEYS.EXPORT_TO_CSV}
+              key={MENU_KEYS.EXPORT_TO_JSON}
               icon={<Icons.FileOutlined css={iconReset} />}
               disabled={!canDownloadCSV}
             >
-              {t('Export to .CSV')}
+              {t('Export to .JSON')}
             </Menu.Item>
-          )}
-          <Menu.Item
-            key={MENU_KEYS.EXPORT_TO_JSON}
-            icon={<Icons.FileOutlined css={iconReset} />}
-            disabled={!canDownloadCSV}
-          >
-            {t('Export to .JSON')}
-          </Menu.Item>
-          <Menu.Item
-            key={MENU_KEYS.DOWNLOAD_AS_IMAGE}
-            icon={<Icons.FileImageOutlined css={iconReset} />}
-          >
-            {t('Download as image')}
-          </Menu.Item>
-          <Menu.Item
-            key={MENU_KEYS.EXPORT_TO_XLSX}
-            icon={<Icons.FileOutlined css={iconReset} />}
-            disabled={!canDownloadCSV}
-          >
-            {t('Export to Excel')}
-          </Menu.Item>
-        </Menu.SubMenu>
-        <Menu.SubMenu title={t('Share')} key={MENU_KEYS.SHARE_SUBMENU}>
-          <Menu.Item key={MENU_KEYS.COPY_PERMALINK}>
-            {t('Copy permalink to clipboard')}
-          </Menu.Item>
-          <Menu.Item key={MENU_KEYS.SHARE_BY_EMAIL}>
-            {t('Share chart by email')}
-          </Menu.Item>
-          {isFeatureEnabled(FeatureFlag.EmbeddableCharts) ? (
-            <Menu.Item key={MENU_KEYS.EMBED_CODE}>
-              <ModalTrigger
-                triggerNode={
-                  <div data-test="embed-code-button">{t('Embed code')}</div>
-                }
-                modalTitle={t('Embed code')}
-                modalBody={
-                  <EmbedCodeContent
-                    formData={latestQueryFormData}
-                    addDangerToast={addDangerToast}
-                  />
-                }
-                maxWidth={`${theme.gridUnit * 100}px`}
-                destroyOnClose
-                responsive
-              />
+            <Menu.Item
+              key={MENU_KEYS.DOWNLOAD_AS_IMAGE}
+              icon={<Icons.FileImageOutlined css={iconReset} />}
+            >
+              {t('Download as image')}
             </Menu.Item>
-          ) : null}
-        </Menu.SubMenu>
-        <Menu.Divider />
-        {showReportSubMenu ? (
-          <>
-            <Menu.SubMenu title={t('Manage email report')}>
+            <Menu.Item
+              key={MENU_KEYS.EXPORT_TO_XLSX}
+              icon={<Icons.FileOutlined css={iconReset} />}
+              disabled={!canDownloadCSV}
+            >
+              {t('Export to Excel')}
+            </Menu.Item>
+          </Menu.SubMenu>
+          <Menu.SubMenu title={t('Share')} key={MENU_KEYS.SHARE_SUBMENU}>
+            <Menu.Item key={MENU_KEYS.COPY_PERMALINK}>
+              {t('Copy permalink to clipboard')}
+            </Menu.Item>
+            <Menu.Item key={MENU_KEYS.SHARE_BY_EMAIL}>
+              {t('Share chart by email')}
+            </Menu.Item>
+            {isFeatureEnabled(FeatureFlag.EmbeddableCharts) ? (
+              <Menu.Item key={MENU_KEYS.EMBED_CODE}>
+                <ModalTrigger
+                  triggerNode={
+                    <div data-test="embed-code-button">{t('Embed code')}</div>
+                  }
+                  modalTitle={t('Embed code')}
+                  modalBody={
+                    <EmbedCodeContent
+                      formData={latestQueryFormData}
+                      addDangerToast={addDangerToast}
+                    />
+                  }
+                  maxWidth={`${theme.gridUnit * 100}px`}
+                  destroyOnClose
+                  responsive
+                />
+              </Menu.Item>
+            ) : null}
+          </Menu.SubMenu>
+          <Menu.Divider />
+          {showReportSubMenu ? (
+            <>
+              <Menu.SubMenu title={t('Manage email report')}>
+                <HeaderReportDropDown
+                  chart={chart}
+                  setShowReportSubMenu={setShowReportSubMenu}
+                  showReportSubMenu={showReportSubMenu}
+                  setIsDropdownVisible={setIsDropdownVisible}
+                  isDropdownVisible={isDropdownVisible}
+                  useTextMenu
+                />
+              </Menu.SubMenu>
+              <Menu.Divider />
+            </>
+          ) : (
+            <Menu>
               <HeaderReportDropDown
                 chart={chart}
                 setShowReportSubMenu={setShowReportSubMenu}
-                showReportSubMenu={showReportSubMenu}
                 setIsDropdownVisible={setIsDropdownVisible}
                 isDropdownVisible={isDropdownVisible}
                 useTextMenu
               />
-            </Menu.SubMenu>
-            <Menu.Divider />
-          </>
-        ) : (
-          <Menu>
-            <HeaderReportDropDown
-              chart={chart}
-              setShowReportSubMenu={setShowReportSubMenu}
-              setIsDropdownVisible={setIsDropdownVisible}
-              isDropdownVisible={isDropdownVisible}
-              useTextMenu
+            </Menu>
+          )}
+          <Menu.Item key={MENU_KEYS.VIEW_QUERY}>
+            <ModalTrigger
+              triggerNode={
+                <div data-test="view-query-menu-item">{t('View query')}</div>
+              }
+              modalTitle={t('View query')}
+              modalBody={
+                <ViewQueryModal latestQueryFormData={latestQueryFormData} />
+              }
+              draggable
+              resizable
+              responsive
             />
-          </Menu>
-        )}
-        <Menu.Item key={MENU_KEYS.VIEW_QUERY}>
-          <ModalTrigger
-            triggerNode={
-              <div data-test="view-query-menu-item">{t('View query')}</div>
-            }
-            modalTitle={t('View query')}
-            modalBody={
-              <ViewQueryModal latestQueryFormData={latestQueryFormData} />
-            }
-            draggable
-            resizable
-            responsive
-          />
-        </Menu.Item>
-        {datasource && (
-          <Menu.Item key={MENU_KEYS.RUN_IN_SQL_LAB}>
-            {t('Run in SQL Lab')}
           </Menu.Item>
-        )}
-      </Menu>
+          {datasource && (
+            <Menu.Item key={MENU_KEYS.RUN_IN_SQL_LAB}>
+              {t('Run in SQL Lab')}
+            </Menu.Item>
+          )}
+          <Menu.Item key={MENU_KEYS.ADD_TABLE_TO_PDF_DESIGNER}>
+            {t('Add table to PDF Designer')}
+          </Menu.Item>
+        </Menu>
+        <PdfTemplateModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTemplate(null);
+          }}
+          onConfirm={handleConfirmTemplateSelection}
+          onSendToNew={handleSendToNew}
+          templates={templates}
+          selectedTemplate={selectedTemplate}
+          setSelectedTemplate={setSelectedTemplate}
+        />
+      </div>
     ),
     [
       addDangerToast,
@@ -453,12 +626,17 @@ export const useExploreAdditionalActionsMenu = (
       chart,
       dashboards,
       handleMenuClick,
+      handleConfirmTemplateSelection,
       isDropdownVisible,
+      isModalOpen,
       latestQueryFormData,
       showReportSubMenu,
       slice,
       theme.gridUnit,
+      templates,
+      selectedTemplate,
     ],
   );
+
   return [menu, isDropdownVisible, setIsDropdownVisible];
 };

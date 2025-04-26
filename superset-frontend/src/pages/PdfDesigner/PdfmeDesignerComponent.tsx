@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, Dispatch, SetStateAction, useMemo } from 'react';
 import { Designer } from '@pdfme/ui';
-import { getInputFromTemplate, type Template } from '@pdfme/common';
+import { getInputFromTemplate, type Template, Schema } from '@pdfme/common';
 import {
   getTemplate,
   getTemplatePlugins,
@@ -11,13 +11,13 @@ import {
   downloadJsonFile,
 } from './helper';
 import { generate } from '@pdfme/generator';
-import { text, image, barcodes } from '@pdfme/schemas';
+import { text, image, barcodes, table } from '@pdfme/schemas';
 import Button from '../../components/Button';
 import ReactDOM from 'react-dom';
-import { makeApi, getClientErrorObject, JsonObject } from '@superset-ui/core'; 
-import './index.css';
-import { useParams } from 'react-router-dom';
+import { makeApi, getClientErrorObject, JsonObject } from '@superset-ui/core';
+import { useParams, useLocation } from 'react-router-dom';
 import { PdfTemplateClient } from 'packages/superset-ui-core/src/pdf_template';
+import './index.css';
 
 interface ModalProps {
   isOpen: boolean;
@@ -75,87 +75,210 @@ const Modal = React.memo(({ isOpen, onClose, onSave, name, setName, description,
 });
 
 const PdfMeDesignerComponent = () => {
-
   const { id } = useParams<{ id: string }>();
-  // Create a reference to store the Designer instance
   const domContainerRef = useRef<HTMLDivElement | null>(null);
-  const designerRef = useRef<Designer | null>(null); 
+  const designerRef = useRef<Designer | null>(null);
   const basePdfInputRef = useRef<HTMLInputElement | null>(null);
   const templateInputRef = useRef<HTMLInputElement | null>(null);
 
+  const location = useLocation();
   const [template, setTemplate] = useState<Template>(getTemplate());
+  const [chartSchema, setChartSchema] = useState<Schema | null>(null);
 
-  console.log('Initial Template:', template);
+  // Fetch schema data from sessionStorage
+  useEffect(() => {
+    if (location.state?.sessionKey) {
+      const sessionKey = location.state.sessionKey;
+      const templateData = sessionStorage.getItem(sessionKey);
+      if (templateData) {
+        const schemastr = JSON.parse(templateData);
+        if (!schemastr.key) {
+           // No table data found in session storage.
+        } else {
+          const basePdf = getTemplate().basePdf as { width: number; height: number; padding: [number, number, number, number] };
+          const pageWidth = basePdf.width - basePdf.padding[1] - basePdf.padding[3];
+
+          const columnCount = schemastr.columns.length;
+          let rowData;
+          try {
+            rowData = JSON.parse(schemastr.data);
+            if (!Array.isArray(rowData) || rowData.length === 0 || !rowData.every(row => Array.isArray(row))) {
+              console.error("Invalid table data format:", rowData);
+              return;
+            }
+          } catch (error) {
+            console.error("Error parsing table data:", error);
+            return;
+          }
+          const rowCount = rowData.length;
+          const tableWidth = pageWidth * 0.9;
+          const rowHeight = 10;
+          const headHeight = 15;
+          const tableHeight = headHeight + (rowCount * rowHeight);
+
+          const schema: Schema = {
+            "name": schemastr.key,
+            "type": schemastr.type,
+            "content": schemastr.data,
+            "showHead": true,
+            "head": schemastr.columns,
+            "headWidthPercentages": Array.from({ length: columnCount }, () => 100 / columnCount),
+            "position": {
+              "x": basePdf.padding[3] + 5,
+              "y": 10 
+            },
+            "width": tableWidth,
+            "height": tableHeight,
+            "tableStyles": {
+              "borderWidth": 0.3,
+              "borderColor": "#000000"
+            },
+            "headStyles": {
+              "fontName": "NotoSerifJP-Regular",
+              "fontSize": 13,
+              "characterSpacing": 0,
+              "alignment": "left",
+              "verticalAlignment": "middle",
+              "lineHeight": 1,
+              "fontColor": "#ffffff",
+              "borderColor": "",
+              "backgroundColor": "#2980ba",
+              "borderWidth": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "padding": {
+                "top": 5,
+                "right": 5,
+                "bottom": 5,
+                "left": 5
+              }
+            },
+            "bodyStyles": {
+              "fontName": "NotoSerifJP-Regular",
+              "fontSize": 13,
+              "characterSpacing": 0,
+              "alignment": "left",
+              "verticalAlignment": "middle",
+              "lineHeight": 1,
+              "fontColor": "#000000",
+              "borderColor": "#888888",
+              "backgroundColor": "",
+              "alternateBackgroundColor": "#f5f5f5",
+              "borderWidth": {
+                "top": 0.1,
+                "right": 0.1,
+                "bottom": 0.1,
+                "left": 0.1
+              },
+              "padding": {
+                "top": 5,
+                "right": 5,
+                "bottom": 5,
+                "left": 5
+              }
+            },
+            "columnStyles": {},
+            "required": false,
+            "readOnly": false
+          };
+
+          setChartSchema(schema);
+        }
+        sessionStorage.removeItem(sessionKey);
+      }
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (id) {
       const client = new PdfTemplateClient();
-  
       const fetchData = async () => {
         try {
-          const result = await client.fetchPdfTemplateData(id); // Call your fetch function
-          const fetchedTemplate : Template = {
-            basePdf: result.data.basePdf,
-            schemas: result.data.schemas, 
+          const result = await client.fetchPdfTemplateData(id);
+
+          // Handle multiple possible response formats
+          const basePdf = result.result?.data?.basePdf ?? result.result?.basePdf ?? result.data?.basePdf ?? result.basePdf;
+          const schemas = result.result?.data?.schemas ?? result.result?.schemas ?? result.data?.schemas ?? result.schemas;
+
+          if (!basePdf || !schemas) {
+            console.error('Invalid template data:', JSON.stringify(result, null, 2));
+            throw new Error('Template data is missing basePdf or schemas');
           }
 
-              // Only update if the template has changed (to prevent livelock)
-          if (JSON.stringify(fetchedTemplate) !== JSON.stringify(template)) {
+          const fetchedTemplate: Template = {
+            basePdf,
+            schemas,
+          };
+
+          // Embed the chart schema if it exists
+          if (chartSchema) {
+            const newTemplate = { ...fetchedTemplate };
+            if (!newTemplate.schemas || !Array.isArray(newTemplate.schemas)) {
+              newTemplate.schemas = [[]];
+            }
+            const baseSchemas = newTemplate.schemas[0] || [];
+            const lastElement = baseSchemas.length > 0 ? baseSchemas[baseSchemas.length - 1] : null;
+            const startingY = lastElement ? lastElement.position.y + lastElement.height + 10 : 10;
+
+            chartSchema.position.y = startingY;
+
+            const pageHeight = (newTemplate.basePdf as { height: number; padding: [number, number, number, number] }).height -
+              (newTemplate.basePdf as { padding: [number, number, number, number] }).padding[0] -
+              (newTemplate.basePdf as { padding: [number, number, number, number] }).padding[2];
+            if (startingY + chartSchema.height > pageHeight) {
+              console.warn("Table exceeds page height");
+              chartSchema.height = pageHeight - startingY - 5;
+            }
+
+            newTemplate.schemas[0] = [...baseSchemas, chartSchema];
+            setTemplate(newTemplate);
+          } else {
             setTemplate(fetchedTemplate);
           }
-
-          console.log('Changed Template:', template);
-
         } catch (err: any) {
-          throw err;
-        } 
+          console.error('Error fetching template:', err.message);
+          setTemplate(getTemplate());
+        }
       };
-  
       fetchData();
+    } else {
+      if (chartSchema) {
+        const newTemplate = getTemplate();
+        newTemplate.schemas = [[chartSchema]];
+        setTemplate(newTemplate);
+      }
     }
-  },[id, template]);
-  
+  }, [id, chartSchema]);
+
   useEffect(() => {
-    let isMounted = true; // Track if the component is mounted
-    console.log('Template in useEffect:', template); 
+    let isMounted = true;
 
     if (domContainerRef.current) {
-      // Create and store the Designer instance in the ref
       designerRef.current = new Designer({
         domContainer: domContainerRef.current,
         template,
         plugins: getTemplatePlugins(),
       });
-
-      // Optionally, you can call methods on the designer here, for example:
-      // designerRef.current.someMethod();
-
     } else {
       console.error('Container not found!');
     }
 
-    // Cleanup function if necessary
     return () => {
-      console.log("Cleaning up Designer instance.");
       if (designerRef.current) {
-        // Cleanup designer instance (e.g., destroy or reset)
-        designerRef.current.destroy?.(); // Call a destroy method if available
+        designerRef.current.destroy?.();
         designerRef.current = null;
       }
       isMounted = false;
     };
-  }, [template]); // Update Designer if template changes
+  }, [template]);
 
   const downloadPDF = async () => {
     if (!designerRef || !designerRef.current) return;
-
     // Get the updated template from the Designer UI
     const updatedTemplate = designerRef.current.getTemplate();
-    console.log('Updated Template:', updatedTemplate);
-
-    // Insert user input data into the PDF fields
-    // const inputs = [formData];
-    console.log(updatedTemplate);
 
     const plugins = getTemplatePlugins();
     const inputs = getInputFromTemplate(updatedTemplate);
@@ -223,8 +346,6 @@ const PdfMeDesignerComponent = () => {
     }
 
     const updatedTemplate = designerRef.current.getTemplate();
-    console.log('Saving Template:', updatedTemplate);
-    console.log('Schemas before saving:', updatedTemplate.schemas);
 
     const payload = {
       name: name || 'Custom Template',
@@ -238,10 +359,10 @@ const PdfMeDesignerComponent = () => {
         endpoint: 'api/v1/pdf_template/',
       })(payload);
 
+
       if (rv?.id) {
         alert('Template saved successfully! ID: ' + rv.id);
-        console.log('Save Response:', rv);
-        setIsModalOpen(false); 
+        const client = new PdfTemplateClient();
       } else {
         throw new Error('Unexpected response format: No ID returned');
       }
@@ -269,7 +390,12 @@ const PdfMeDesignerComponent = () => {
         <Button buttonStyle="secondary" onClick={downloadPDF}>
           Download PDF
         </Button>
-        <Button buttonStyle="secondary" onClick={onDownloadTemplate}>
+        <Button 
+          buttonStyle="secondary" 
+          onClick={onDownloadTemplate}
+          disabled={!!chartSchema}
+          title={chartSchema ? "Download Template is disabled when viewing chart data" : ""}
+        >
           Download Template
         </Button>
         <input
@@ -298,7 +424,12 @@ const PdfMeDesignerComponent = () => {
         >
           Change Base PDF
         </Button>
-        <Button buttonStyle="secondary" onClick={onSaveTemplate}>
+        <Button 
+          buttonStyle="secondary" 
+          onClick={onSaveTemplate}
+          disabled={!!chartSchema}
+          title={chartSchema ? "Save is disabled when viewing chart data" : ""}
+        >
           Save
         </Button>
         <Button buttonStyle="secondary" onClick={onResetTemplate}>

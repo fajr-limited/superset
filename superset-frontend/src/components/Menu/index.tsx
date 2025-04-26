@@ -131,7 +131,7 @@ const StyledSubMenu = styled(AntdMenu.SubMenu)`
     }
   }
   .antd5-menu-submenu-title {
-    display: flex;
+    display: block;
     flex-direction: row-reverse;
     &:after {
       content: '';
