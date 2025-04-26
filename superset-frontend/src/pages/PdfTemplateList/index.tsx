@@ -360,15 +360,14 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
                     title={t('Edit')}
                     placement="bottom"
                   >
-                    {/* Should navigate to PDF Designer */}
-                    {/* <span
+                    <span
                       role="button"
                       tabIndex={0}
                       className="action-button"
-                      onClick={openEditModal}
+                      onClick={() => history.push(`/pdf_template/${original.id}`)}
                     >
                       <Icons.EditAlt data-test="edit-alt" />
-                    </span> */}
+                    </span>
                   </Tooltip>
                 )}
               </StyledActions>
@@ -394,6 +393,7 @@ import PdfTemplateCard from 'src/features/pdf_templates/PdfTemplateCard';
         refreshData,
         addSuccessToast,
         addDangerToast,
+        history,
       ],
     );
   
